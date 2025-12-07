@@ -1,0 +1,6 @@
+Frequency Bitwise Test (C++): p_value = 0.8596837951986662, Result: Passed
+Same Bits Test (C++): p_value = 0.2168393473757962, Result: Passed
+Longest Test (C++): p_value = 0.9936235018804211, Result: Passed
+Frequency Bitwise Test (Java): p_value = 0.7236736098317631, Result: Passed
+Same Bits Test (Java): p_value = 0.8508697205465341, Result: Passed
+Longest Test (Java): p_value = 0.9936235018804211, Result: Passed
