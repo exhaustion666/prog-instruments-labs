@@ -5,59 +5,59 @@ import scipy as sp
 from prettytable import PrettyTable
 from scipy.optimize import fsolve
 
-A1 = np.random.randint(-8, 9,(3, 3))
+A1 = np.random.randint(-8, 9, (3, 3))
 print("Matrix A: ", "\n", A1)
 def gramSchmidtQR(A):
-    n=A.shape[ 1 ]
-    m=A.shape[ 0 ]
-    Q=np.zeros((m, n), dtype=float)
-    cnt=0
+    n = A.shape[1]
+    m = A.shape[0]
+    Q = np.zeros((m, n), dtype=float)
+    cnt = 0
     for a in A.T:
-        u=np.copy(a)
+        u = np.copy(a)
         for i in range(0, cnt):
-            u=u-np.dot(np.dot(Q[:, i], a), Q[:, i]) 
-        e=u/np.linalg.norm(u)
+            u = u - np.dot(np.dot(Q[:, i], a), Q[:, i]) 
+        e = u / np.linalg.norm(u)
         Q[:, cnt] = e
-        cnt+=1
-    R=np.dot(Q.T, A)
+        cnt += 1
+    R = np.dot(Q.T, A)
     return Q, R
 
 def gramSchmidtPartial(A):
-    A=np.array(A, dtype=float)
-    m, n=A.shape
-    Q=np.zeros((m, 2))
-    R=np.zeros((2, n))
-    v1=A[ :, 0 ].copy()
-    R[ 0, 0 ]=np.linalg.norm(v1)
-    if R[ 0, 0 ]>1e-10:
-        Q[:, 0]=v1 / R[0, 0]
-    else: Q[:, 0]=v1
-    if Q[ 0, 0 ]<0:
-        Q[:, 0]=-Q[:, 0]
-        R[ 0, 0 ]=-R[ 0, 0 ]
-    v2=A[:, 1].copy()
-    R[ 0, 1] =np.dot(Q[:, 0], A[:, 1])
-    v2-=R[ 0, 1 ] * Q[:, 0]
-    R[ 1, 1 ]=np.linalg.norm(v2)
-    if R[ 1, 1 ]>1e-10:
-        Q[:, 1]=v2 / R[ 1, 1 ]
-    else: Q[:, 1]=v2
-    if Q[ 0, 1 ]<0:
-        Q[:, 1]=-Q[:, 1]
-        R[ 0, 1 ]=-R[ 0, 1 ]
-        R[ 1, 1 ]=-R[ 1, 1 ]
+    A = np.array(A, dtype=float)
+    m, n = A.shape
+    Q = np.zeros((m, 2))
+    R = np.zeros((2, n))
+    v1 = A[:, 0].copy()
+    R[0, 0] = np.linalg.norm(v1)
+    if R[0, 0] > 1e-10:
+        Q[:, 0] = v1 / R[0, 0]
+    else: Q[:, 0] = v1
+    if Q[0, 0] < 0:
+        Q[:, 0] = -Q[:, 0]
+        R[0, 0] = -R[0, 0]
+    v2 = A[:, 1].copy()
+    R[0, 1] = np.dot(Q[:, 0], A[:, 1])
+    v2 -= R[0, 1] * Q[:, 0]
+    R[1, 1] = np.linalg.norm(v2)
+    if R[1, 1] > 1e-10:
+        Q[:, 1] = v2 / R[1, 1]
+    else: Q[:, 1] = v2
+    if Q[0, 1] < 0:
+        Q[:, 1] = -Q[:, 1]
+        R[0, 1] = -R[ 0, 1 ]
+        R[1, 1]= -R[ 1, 1 ]
     for j in range(2, n):
-        R[0, j]=np.dot(Q[:, 0], A[:, j])
-        R[1, j]=np.dot(Q[:, 1], A[:, j])
-    Q=-Q
-    R=-R
+        R[0, j] = np.dot(Q[:, 0], A[:, j])
+        R[1, j] = np.dot(Q[:, 1], A[:, j])
+    Q = -Q
+    R = -R
     return Q, R
-np.set_printoptions(precision=4, suppress=True)
-Q, R=gramSchmidtQR(A1)
+np.set_printoptions(precision = 4, suppress = True)
+Q, R = gramSchmidtQR(A1)
 print("Matrix Q: ", "\n", Q, "\n", "Matrix R: ", "\n", R)
 print("np.linalg: ", "\n", np.linalg.qr(A1))
 
-A=np.array([
+A = np.array([
     [8.2, 3.2, 14.2, 14.8], [5.6, 12, 15, 6.4],
     [5.7, 3.6, 12.4, 2.3],
     [6.8, 13.2, 6.3, 8.7]
