@@ -19,7 +19,11 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 first_matrix = np.random.randint(-8, 9, (3, 3))
-print("Matrix A: ", "\n", first_matrix)
+logger.info(
+    f"NumPy QR decomposition:\nQ=\n \
+    {np.linalg.qr(first_matrix)[0]}\nR=\n \
+    {np.linalg.qr(first_matrix)[1]}"
+    )
 
 def gram_schmidt_qr(A):
     """
@@ -116,8 +120,8 @@ q1_matrix, r1_matrix = gram_schmidt_qr(first_matrix)
 logger.info("QR Decomposition Results:")
 logger.info(f"Matrix Q:\n{q1_matrix}")
 logger.info(f"Matrix R:\n{r1_matrix}")
-print("Matrix Q: ", "\n", q1_matrix, "\n", "Matrix R: ", "\n", r1_matrix)
-print("np.linalg: ", "\n", np.linalg.qr(first_matrix))
+np_qr = np.linalg.qr(first_matrix)
+logger.info(f"NumPy QR decomposition:\nQ=\n{np_qr[0]}\nR=\n{np_qr[1]}")
 
 second_matrix = np.array([
     [8.2, 3.2, 14.2, 14.8], 
@@ -161,19 +165,13 @@ def solve_qr(A, b):
 
 
 q2_matrix, r2_matrix = gram_schmidt_qr(second_matrix)
-logger.info("\nQR Decomposition for linear system:")
+logger.info("QR Decomposition for linear system:")
 logger.info(f"Matrix Q:\n{q2_matrix}")
 logger.info(f"Matrix R:\n{r2_matrix}")
-print("\nMatrix Q:")
-print(q2_matrix)
-print("\nMatrix R:")
-print(r2_matrix)
 qr_matrix = solve_qr(second_matrix, first_solution)
-logger.info(f"\nSystem solution (QR method): x = {qr_matrix}")
-print(f"\nSystem solution (QR method): x = {qr_matrix}")
+logger.info(f"System solution (QR method): x = {qr_matrix}")
 np_solution = np.linalg.solve(second_matrix, first_solution)
 logger.info(f"NumPy solution: x = {np_solution}")
-print(f"Numpy solution: x = {np_solution}")
 
 def check_diagonal_dominance(A):
     """
@@ -255,7 +253,7 @@ third_matrix = np.array([
     [7.5, 3.8, 4.8]
 ])
 second_solution = np.array([0.2, 2.1, 5.6])
-logger.info(f"\nOriginal matrix for Seidel method:\n{third_matrix}")
+logger.info(f"Original matrix for Seidel method:\n{third_matrix}")
 logger.info(f"Original vector b: {second_solution}")
 
 if not check_diagonal_dominance(third_matrix):
@@ -271,17 +269,14 @@ else:
     A = third_matrix
     b = second_solution
 
-logger.info("\nApplying Seidel method to reordered system:")
-print("\nZeidel Solution: ")
+logger.info("Applying Seidel method to reordered system:")
 solution = seidel_method(A, b)
-print(f"\nSolution: ")
-logger.info(f"\nSeidel method solution: {solution}")
+logger.info(f"Seidel method solution: {solution}")
 
 for i, val in enumerate(solution):
     print(f"x{i+1} = {val:.6f}")
 
 numpy_solution = np.linalg.solve(third_matrix, second_solution)
-print("Linalg solve: ", np.linalg.solve(third_matrix, second_solution))
 logger.info(f"NumPy solution for original system: {numpy_solution}")
 
 def cubic_function(x):
@@ -437,7 +432,7 @@ logger.info("Function: f(x) = -1.38*x^3 - 5.42*x^2 + 2.57*x + 10.95")
 x = np.linspace(-5, 3, 1000)
 y = cubic_function(x)
 
-print("\nInterval Analysis")
+logger.info("Interval Analysis")
 analysis_table = PrettyTable()
 analysis_table.field_names = ["x", "f(x)", "f'(x)", "f''(x)", "Sign f(x)"]
 
@@ -450,52 +445,44 @@ for point in test_points:
     sign = "+" if fx > 0 else "-" if fx < 0 else "0"
     analysis_table.add_row([point, f"{fx:.3f}", f"{fpx:.3f}", f"{fdpx:.3f}", sign])
 
-print(analysis_table)
-print("\nRoot intervals")
+logger.info(f"Interval analysis table:\n{analysis_table}")
+logger.info("Root intervals")
 intervals = []
 
 for i in range(len(test_points)-1):
     if cubic_function(test_points[i])*cubic_function(test_points[i+1]) <= 0:
         intervals.append((test_points[i], test_points[i+1]))
-        print(f"Root in interval [{test_points[i]}, {test_points[i+1]}]")
         logger.info(f"Found root interval: [{test_points[i]}, {test_points[i+1]}]")
 
 for i, (a, b) in enumerate(intervals):
-    print(f"\nSolution for root in interval [{a}, {b}]")
-    print("\nConvergence conditions check:")
+    logger.info(f"Solution for root in interval [{a}, {b}]")
+    logger.info(f"Convergence conditions check:")
     print(f"f({a}) = {cubic_function(a):.3f}")
     print(f"f({b}) = {cubic_function(b):.3f}")
     print(f"f({a}) * f({b}) = {cubic_function(a) * cubic_function(b):.3f}")
     
     if cubic_function(a)*cubic_function(b) < 0: 
-        print("Condition f(a)*f(b) < 0 is satisfied")
         logger.info(f"Convergence condition satisfied for interval [{a}, {b}]")
     else:  
-        print("Condition f(a)*f(b) < 0 is not satisfied")
         logger.warning(f"Convergence condition not satisfied for interval [{a}, {b}]")
     
-    print(f"\nBisection method")
+    logger.info(f"Bisection method")
     root_bisection, table_bisection = bisection_method(cubic_function, a, b, eps=1e-3)
     if root_bisection is not None:
-        print(table_bisection)
-        print(f"Found root: x = {root_bisection:.3f}")
-        print(f"Check: f({root_bisection:.3f}) = {cubic_function(root_bisection):.3f}")
         logger.info(f"Bisection root: {root_bisection:.6f}, f(root)={cubic_function(root_bisection):.6f}")
     else: 
         print(table_bisection)
     
-    print(f"\nCombined method")
+    logger.info(f"Combined method")
     root_combined, table_combined = combined_method(
         cubic_function, 
         f_prime, a, 
         b, eps=1e-5
     )
-    print(table_combined)
-    print(f"Found root: x = {root_combined:.3f}")
-    print(f"Check: f({root_combined:.3f}) = {cubic_function(root_combined):.3f}")
+    logger.info(f"{table_combined}")
     logger.info(f"Combined method root: {root_combined:.6f}, f(root)={cubic_function(root_combined):.6f}")
 
-print(f"\nNumpy Solution")
+logger.info(f"Numpy Solution")
 coefficients = [-1.38, -5.42, 2.57, 10.95]
 roots_numpy = np.roots(coefficients)
 real_roots = roots_numpy[np.isreal(roots_numpy)].real
@@ -503,8 +490,6 @@ logger.info("NumPy polynomial roots:")
 
 for i, root in enumerate(real_roots):
     if -5 <= root <= 3:
-        print(f"Root {i+1}: x = {root:.3f}")
-        print(f"Check: f({root:.3f}) = {cubic_function(root):.3f}")
         logger.info(f"NumPy root {i+1}: {root:.6f}, f(root)={cubic_function(root):.6f}")
 
 def first_equation(x, y):
@@ -590,7 +575,7 @@ def newton_system(f1, f2, jacobian, x0, y0, eps=1e-4, max_iter=100):
     """
     logger.info(f"Starting Newton's method for system with initial guess ({x0}, {y0})")
     table = PrettyTable()
-    table.field_names = ["Iteration", "x", "y", "f1(x,y)", "f2(x,y)", "||Δ||"]
+    table.field_names = ["Iteration", "x", "y", "f1(x,y)", "f2(x,y)", "||delta||"]
     x, y = x0, y0
     
     for i in range(max_iter):
@@ -617,7 +602,7 @@ def newton_system(f1, f2, jacobian, x0, y0, eps=1e-4, max_iter=100):
               f"{f2(x_new, y_new):.8f}",  
               f"{delta_norm:.8f}"
         ])
-        logger.debug(f"Iteration {i+1}: x={x_new:.8f}, y={y_new:.8f}, Δ={delta_norm:.8f}")
+        logger.debug(f"Iteration {i+1}: x={x_new:.8f}, y={y_new:.8f}, delta={delta_norm:.8f}")
         
         if delta_norm < eps:
             logger.info(f"Newton's method converged in {i+1} iterations")
@@ -628,9 +613,7 @@ def newton_system(f1, f2, jacobian, x0, y0, eps=1e-4, max_iter=100):
     return (x, y), table, max_iter
 
 
-logger.info("\nSystem of Equations Analysis")
-print("Function analysis")
-print("System of equations:")
+logger.info("System of Equations Analysis")
 print("f1(x,y) = sin(x) + 2y - 2 = 0")
 print("f2(x,y) = 2x + cos(y-1) - 0.7 = 0")
 
@@ -642,22 +625,18 @@ z1 = first_equation(X, Y)
 z2 = second_equation(X, Y)
 
 x0, y0 = 0.5, 0.8
-print("\nJacobian matrix")
+logger.info("Jacobian matrix")
 jacobian_matrix = jacobian(x0, y0)
 print("J(x,y) =")
 print(f"[ cos(x)      2     ]")
 print(f"[   2     -sin(y-1) ]")
-print(f"\nAt initial point (x0,y0) = ({x0},{y0}):")
-print(f"J({x0},{y0}) =")
-print(f"[ {jacobian_matrix[0,0]:.6f}  {jacobian_matrix[0,1]:.6f} ]")
-print(f"[ {jacobian_matrix[1,0]:.6f}  {jacobian_matrix[1,1]:.6f} ]")
 logger.info(f"Initial guess: ({x0}, {y0})")
 logger.info(f"Jacobian at initial point:\n{jacobian_matrix}")
 
-print("\nNewton's method solution")
+logger.info("Newton's method solution")
 solution, table, iterations = newton_system(
     first_equation, 
     second_equation,
     jacobian, x0, y0
 )
-print(table)
+logger.info(f"{table}")
