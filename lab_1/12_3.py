@@ -1,10 +1,9 @@
-import numpy as np 
-import scipy as sp
-from scipy.optimize import fsolve
 import math
 import matplotlib.pyplot as plt
+import numpy as np 
+import scipy as sp
 from prettytable import PrettyTable
-
+from scipy.optimize import fsolve
 
 A1 = np.random.randint(-8, 9,(3, 3))
 print("Matrix A: ", "\n", A1)
