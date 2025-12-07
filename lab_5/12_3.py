@@ -1,9 +1,22 @@
+import logging
 import math
 import matplotlib.pyplot as plt
 import numpy as np 
 import scipy as sp
+import sys
+from datetime import datetime
 from prettytable import PrettyTable
 from scipy.optimize import fsolve
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler(f'calculation_log_{datetime.now().strftime("%Y%m%d_%H%M%S")}.log'),
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+logger = logging.getLogger(__name__)
 
 first_matrix = np.random.randint(-8, 9, (3, 3))
 print("Matrix A: ", "\n", first_matrix)
@@ -22,6 +35,7 @@ def gram_schmidt_qr(A):
     R: numpy.ndarray
         Upper triangular matrix R
     """
+    logger.debug(f"Starting Gram-Schmidt QR decomposition for matrix shape {A.shape}")
     n = A.shape[1]
     m = A.shape[0]
     Q = np.zeros((m, n), dtype=float)
@@ -36,6 +50,7 @@ def gram_schmidt_qr(A):
         cnt += 1
 
     R = np.dot(Q.T, A)
+    logger.debug("Gram-Schmidt QR decomposition completed")
 
     return Q, R
 
@@ -55,6 +70,7 @@ def gram_schmidt_partial(A):
     R: numpy.ndarray
         Upper triangular matrix R (partial)
     """
+    logger.debug(f"Starting partial Gram-Schmidt for matrix shape {A.shape}")
     A = np.array(A, dtype=float)
     m, n = A.shape
     Q = np.zeros((m, 2))
@@ -90,12 +106,16 @@ def gram_schmidt_partial(A):
         R[1, j] = np.dot(Q[:, 1], A[:, j])
     Q = -Q
     R = -R
+    logger.debug("Partial Gram-Schmidt completed")
 
     return Q, R
 
 
 np.set_printoptions(precision=4, suppress=True)
 q1_matrix, r1_matrix = gram_schmidt_qr(first_matrix)
+logger.info("QR Decomposition Results:")
+logger.info(f"Matrix Q:\n{q1_matrix}")
+logger.info(f"Matrix R:\n{r1_matrix}")
 print("Matrix Q: ", "\n", q1_matrix, "\n", "Matrix R: ", "\n", r1_matrix)
 print("np.linalg: ", "\n", np.linalg.qr(first_matrix))
 
@@ -106,6 +126,8 @@ second_matrix = np.array([
     [6.8, 13.2, 6.3, 8.7]
 ])
 first_solution = np.array([8.4, 4.5, 3.3, 14.3])
+logger.info(f"Matrix A for linear system:\n{second_matrix}")
+logger.info(f"Vector b: {first_solution}")
 
 def solve_qr(A, b):
     """
@@ -121,6 +143,7 @@ def solve_qr(A, b):
     x: numpy.ndarray
         Solution vector
     """
+    logger.debug("Solving linear system using QR method")
     Q, R = gram_schmidt_qr(A)
     b_hat = np.dot(Q.T, b)
     n = len(b_hat)
@@ -131,18 +154,25 @@ def solve_qr(A, b):
         for j in range(i+1, n):
             x[i] -= R[i, j] * x[j]
         x[i] /= R[i, i]
+
+    logger.debug("QR system solution completed")
     
     return x
 
 
 q2_matrix, r2_matrix = gram_schmidt_qr(second_matrix)
+logger.info("\nQR Decomposition for linear system:")
+logger.info(f"Matrix Q:\n{q2_matrix}")
+logger.info(f"Matrix R:\n{r2_matrix}")
 print("\nMatrix Q:")
 print(q2_matrix)
 print("\nMatrix R:")
 print(r2_matrix)
 qr_matrix = solve_qr(second_matrix, first_solution)
+logger.info(f"\nSystem solution (QR method): x = {qr_matrix}")
 print(f"\nSystem solution (QR method): x = {qr_matrix}")
 np_solution = np.linalg.solve(second_matrix, first_solution)
+logger.info(f"NumPy solution: x = {np_solution}")
 print(f"Numpy solution: x = {np_solution}")
 
 def check_diagonal_dominance(A):
@@ -157,13 +187,17 @@ def check_diagonal_dominance(A):
     bool
         True if matrix is diagonally dominant, False otherwise
     """
+    logger.debug("Checking diagonal dominance")
     n = len(A)
 
     for i in range(n):
         diagonal = abs(A[i][i])
         row_sum = sum(abs(A[i][j]) for j in range(n) if j != i)
         if diagonal <= row_sum:
+            logger.debug(f"Row {i} is not diagonally dominant")
             return False
+    
+    logger.debug("Matrix is diagonally dominant")
         
     return True
 
@@ -186,6 +220,7 @@ def seidel_method(A, b, eps=1e-3, max_iter=100):
     x: numpy.ndarray
         Solution vector
     """
+    logger.info(f"Starting Seidel method with eps={eps}, max_iter={max_iter}")
     n = len(A)
     x = np.zeros(n)
     table = PrettyTable()
@@ -203,10 +238,12 @@ def seidel_method(A, b, eps=1e-3, max_iter=100):
                 max_error = error
         table.add_row([k+1] + [f"{val:.6f}" for val in x_new] + [f"{max_error:.6f}"])
         if max_error < eps:
+            logger.info(f"Seidel method converged in {k+1} iterations")
             print(table)
             return x_new
         x = x_new
 
+    logger.warning(f"Seidel method did not converge in {max_iter} iterations")
     print(table)
 
     return x
@@ -218,26 +255,34 @@ third_matrix = np.array([
     [7.5, 3.8, 4.8]
 ])
 second_solution = np.array([0.2, 2.1, 5.6])
+logger.info(f"\nOriginal matrix for Seidel method:\n{third_matrix}")
+logger.info(f"Original vector b: {second_solution}")
 
 if not check_diagonal_dominance(third_matrix):
+    logger.warning("Original matrix is not diagonally dominant, reordering rows...")
     A = np.array([
         [7.5, 3.8, 4.8], 
         [1.9, 4.1, 2.1],
         [3.1, 2.8, 4.9]
     ])
     b = np.array([5.6, 2.1, 0.2])
+    logger.info("Reordered matrix to achieve diagonal dominance")
 else:
     A = third_matrix
     b = second_solution
 
+logger.info("\nApplying Seidel method to reordered system:")
 print("\nZeidel Solution: ")
 solution = seidel_method(A, b)
 print(f"\nSolution: ")
+logger.info(f"\nSeidel method solution: {solution}")
 
 for i, val in enumerate(solution):
     print(f"x{i+1} = {val:.6f}")
 
+numpy_solution = np.linalg.solve(third_matrix, second_solution)
 print("Linalg solve: ", np.linalg.solve(third_matrix, second_solution))
+logger.info(f"NumPy solution for original system: {numpy_solution}")
 
 def cubic_function(x):
     """
@@ -305,10 +350,12 @@ def bisection_method(f, a, b, eps=1e-3, max_iter=100):
         (root, table) where root is the found root or None,
         and table is the iteration history
     """
+    logger.info(f"Starting bisection method on interval [{a}, {b}] with eps={eps}")
     table = PrettyTable()
     table.field_names = ["Iteration", "a", "b", "x", "f(a)", "f(b)", "f(x)", "|b-a|"]
     if f(a)*f(b) > 0:
-        return None, "Function has same signs at interval endpoints"
+        logger.error("Function has same signs at interval endpoints")
+        return None
     
     for i in range(max_iter):
         x = (a+b)/2
@@ -324,6 +371,7 @@ def bisection_method(f, a, b, eps=1e-3, max_iter=100):
             f"{abs(b-a):.6f}"
         ])
         if abs(b-a) < eps:
+            logger.info(f"Bisection method converged in {i+1} iterations, root={x:.6f}")
             return x, table
         if f(a)*f(x) < 0:  
             b = x
@@ -356,6 +404,7 @@ def combined_method(f, f_prime, a, b, eps=1e-5, max_iter=100):
         (root, table) where root is the found root,
         and table is the iteration history
     """
+    logger.info(f"Starting combined method on interval [{a}, {b}] with eps={eps}")
     table = PrettyTable()
     table.field_names = ["Iteration", "x_chord", "x_tangent", "f(x_chord)", "f(x_tangent)", "|diff|"]
     x_chord, x_tangent = a, b
@@ -373,22 +422,20 @@ def combined_method(f, f_prime, a, b, eps=1e-5, max_iter=100):
             f"{diff:.3f}"
         ])
         if diff < eps:
-            return (x_chord_new+x_tangent_new)/2, table
+            root = (x_chord_new+x_tangent_new)/2
+            logger.info(f"Combined method converged in {i+1} iterations, root={root:.6f}")
+            return root, table
         x_chord, x_tangent = x_chord_new, x_tangent_new
+    
+    root = (x_chord+x_tangent)/2
+    logger.warning(f"Combined method did not converge in {max_iter} iterations, approximate root={root:.6f}")
 
-    return (x_chord+x_tangent)/2, table
+    return root, table
 
 
+logger.info("Function: f(x) = -1.38*x^3 - 5.42*x^2 + 2.57*x + 10.95")
 x = np.linspace(-5, 3, 1000)
 y = cubic_function(x)
-
-plt.figure(figsize=(12, 8))
-plt.plot(x, y, 'b-', linewidth=2)
-plt.axhline(y=0, color='k', linestyle='--', alpha=0.3)
-plt.grid(True, alpha=0.3)
-plt.xlabel('x')
-plt.ylabel('f(x)')
-plt.show()
 
 print("\nInterval Analysis")
 analysis_table = PrettyTable()
@@ -411,8 +458,7 @@ for i in range(len(test_points)-1):
     if cubic_function(test_points[i])*cubic_function(test_points[i+1]) <= 0:
         intervals.append((test_points[i], test_points[i+1]))
         print(f"Root in interval [{test_points[i]}, {test_points[i+1]}]")
-        print(f"f({test_points[i]}) = {cubic_function(test_points[i]):.3f}, 
-              f({test_points[i+1]}) = {cubic_function(test_points[i+1]):.3f}")
+        logger.info(f"Found root interval: [{test_points[i]}, {test_points[i+1]}]")
 
 for i, (a, b) in enumerate(intervals):
     print(f"\nSolution for root in interval [{a}, {b}]")
@@ -423,8 +469,10 @@ for i, (a, b) in enumerate(intervals):
     
     if cubic_function(a)*cubic_function(b) < 0: 
         print("Condition f(a)*f(b) < 0 is satisfied")
+        logger.info(f"Convergence condition satisfied for interval [{a}, {b}]")
     else:  
         print("Condition f(a)*f(b) < 0 is not satisfied")
+        logger.warning(f"Convergence condition not satisfied for interval [{a}, {b}]")
     
     print(f"\nBisection method")
     root_bisection, table_bisection = bisection_method(cubic_function, a, b, eps=1e-3)
@@ -432,6 +480,7 @@ for i, (a, b) in enumerate(intervals):
         print(table_bisection)
         print(f"Found root: x = {root_bisection:.3f}")
         print(f"Check: f({root_bisection:.3f}) = {cubic_function(root_bisection):.3f}")
+        logger.info(f"Bisection root: {root_bisection:.6f}, f(root)={cubic_function(root_bisection):.6f}")
     else: 
         print(table_bisection)
     
@@ -444,16 +493,19 @@ for i, (a, b) in enumerate(intervals):
     print(table_combined)
     print(f"Found root: x = {root_combined:.3f}")
     print(f"Check: f({root_combined:.3f}) = {cubic_function(root_combined):.3f}")
+    logger.info(f"Combined method root: {root_combined:.6f}, f(root)={cubic_function(root_combined):.6f}")
 
 print(f"\nNumpy Solution")
 coefficients = [-1.38, -5.42, 2.57, 10.95]
 roots_numpy = np.roots(coefficients)
 real_roots = roots_numpy[np.isreal(roots_numpy)].real
+logger.info("NumPy polynomial roots:")
 
 for i, root in enumerate(real_roots):
     if -5 <= root <= 3:
         print(f"Root {i+1}: x = {root:.3f}")
         print(f"Check: f({root:.3f}) = {cubic_function(root):.3f}")
+        logger.info(f"NumPy root {i+1}: {root:.6f}, f(root)={cubic_function(root):.6f}")
 
 def first_equation(x, y):
     """
@@ -536,6 +588,7 @@ def newton_system(f1, f2, jacobian, x0, y0, eps=1e-4, max_iter=100):
         (solution, table, iterations) where solution is (x,y) or None,
         table is iteration history, iterations is number of iterations
     """
+    logger.info(f"Starting Newton's method for system with initial guess ({x0}, {y0})")
     table = PrettyTable()
     table.field_names = ["Iteration", "x", "y", "f1(x,y)", "f2(x,y)", "||Δ||"]
     x, y = x0, y0
@@ -545,7 +598,9 @@ def newton_system(f1, f2, jacobian, x0, y0, eps=1e-4, max_iter=100):
         J = jacobian(x, y)
         det_J = np.linalg.det(J)
         if abs(det_J) < 1e-12:
-            return None, table, "Jacobian is singular"
+            error_msg = "Jacobian is singular"
+            logger.error(f"{error_msg} at iteration {i+1}")
+            return None, table, error_msg
         J_dx = np.array([[F[0], J[0,1]], [F[1], J[1,1]]])
         J_dy = np.array([[J[0,0], F[0]], [J[1,0], F[1]]])
         
@@ -562,14 +617,18 @@ def newton_system(f1, f2, jacobian, x0, y0, eps=1e-4, max_iter=100):
               f"{f2(x_new, y_new):.8f}",  
               f"{delta_norm:.8f}"
         ])
+        logger.debug(f"Iteration {i+1}: x={x_new:.8f}, y={y_new:.8f}, Δ={delta_norm:.8f}")
         
         if delta_norm < eps:
+            logger.info(f"Newton's method converged in {i+1} iterations")
             return (x_new, y_new), table, i+1
         x, y = x_new, y_new
+    logger.warning(f"Newton's method did not converge in {max_iter} iterations")
 
     return (x, y), table, max_iter
 
 
+logger.info("\nSystem of Equations Analysis")
 print("Function analysis")
 print("System of equations:")
 print("f1(x,y) = sin(x) + 2y - 2 = 0")
@@ -582,12 +641,6 @@ X, Y = np.meshgrid(x, y)
 z1 = first_equation(X, Y)
 z2 = second_equation(X, Y)
 
-plt.figure(figsize=(10, 8))
-contour1=plt.contour(X, Y, z1, levels=[0], colors='red', linewidths=2)
-contour2=plt.contour(X, Y, z2, levels=[0], colors='blue', linewidths=2)
-plt.grid(True, alpha=0.3)
-plt.show()
-
 x0, y0 = 0.5, 0.8
 print("\nJacobian matrix")
 jacobian_matrix = jacobian(x0, y0)
@@ -598,13 +651,9 @@ print(f"\nAt initial point (x0,y0) = ({x0},{y0}):")
 print(f"J({x0},{y0}) =")
 print(f"[ {jacobian_matrix[0,0]:.6f}  {jacobian_matrix[0,1]:.6f} ]")
 print(f"[ {jacobian_matrix[1,0]:.6f}  {jacobian_matrix[1,1]:.6f} ]")
+logger.info(f"Initial guess: ({x0}, {y0})")
+logger.info(f"Jacobian at initial point:\n{jacobian_matrix}")
 
-print("\nLinear system")
-print("System to solve for Δx, Δy:")
-print(f"[ {jacobian_matrix[0,0]:.6f}  {jacobian_matrix[0,1]:.6f} ] 
-      [Δx]   [{-first_equation(x0,y0):.6f}]")
-print(f"[ {jacobian_matrix[1,0]:.6f}  {jacobian_matrix[1,1]:.6f} ] 
-      [Δy] = [{-second_equation(x0,y0):.6f}]")
 print("\nNewton's method solution")
 solution, table, iterations = newton_system(
     first_equation, 
