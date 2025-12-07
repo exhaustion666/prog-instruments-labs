@@ -9,6 +9,19 @@ first_matrix = np.random.randint(-8, 9, (3, 3))
 print("Matrix A: ", "\n", first_matrix)
 
 def gram_schmidt_qr(A):
+    """
+    Perform QR decomposition using the Gram-Schmidt orthogonalization process.
+    
+    Parameters:
+    A: numpy.ndarray
+        Input matrix to decompose
+        
+    Returns:
+    Q: numpy.ndarray
+        Orthogonal matrix Q
+    R: numpy.ndarray
+        Upper triangular matrix R
+    """
     n = A.shape[1]
     m = A.shape[0]
     Q = np.zeros((m, n), dtype=float)
@@ -28,6 +41,19 @@ def gram_schmidt_qr(A):
 
 
 def gram_schmidt_partial(A):
+    """
+    Perform partial QR decomposition using Gram-Schmidt for matrices with 2 columns.
+    
+    Parameters:
+    A: numpy.ndarray
+        Input matrix with at least 2 columns
+        
+    Returns:
+    Q: numpy.ndarray
+        Orthogonal matrix Q (partial)
+    R: numpy.ndarray
+        Upper triangular matrix R (partial)
+    """
     A = np.array(A, dtype=float)
     m, n = A.shape
     Q = np.zeros((m, 2))
@@ -80,6 +106,19 @@ second_matrix = np.array([
 first_solution = np.array([8.4, 4.5, 3.3, 14.3])
 
 def solve_qr(A, b):
+    """
+    Solve linear system Ax = b using QR decomposition.
+    
+    Parameters:
+    A: numpy.ndarray
+        Coefficient matrix
+    b: numpy.ndarray
+        Right-hand side vector
+        
+    Returns:
+    x: numpy.ndarray
+        Solution vector
+    """
     Q, R = gram_schmidt_qr(A)
     b_hat = np.dot(Q.T, b)
     n = len(b_hat)
@@ -105,6 +144,17 @@ np_solution = np.linalg.solve(second_matrix, first_solution)
 print(f"Numpy solution: x = {np_solution}")
 
 def check_diagonal_dominance(A):
+    """
+    Check if a matrix is diagonally dominant.
+    
+    Parameters:
+    A: numpy.ndarray
+        Square matrix to check
+        
+    Returns:
+    bool
+        True if matrix is diagonally dominant, False otherwise
+    """
     n = len(A)
 
     for i in range(n):
@@ -117,6 +167,23 @@ def check_diagonal_dominance(A):
 
 
 def seidel_method(A, b, eps=1e-3, max_iter=100):
+    """
+    Solve linear system using Gauss-Seidel method.
+    
+    Parameters:
+    A: numpy.ndarray
+        Coefficient matrix
+    b: numpy.ndarray
+        Right-hand side vector
+    eps: float, optional
+        Convergence tolerance (default: 1e-3)
+    max_iter: int, optional
+        Maximum number of iterations (default: 100)
+        
+    Returns:
+    x: numpy.ndarray
+        Solution vector
+    """
     n = len(A)
     x = np.zeros(n)
     table = PrettyTable()
@@ -169,18 +236,71 @@ for i, val in enumerate(solution):
 print("Linalg solve: ", np.linalg.solve(third_matrix, second_solution))
 
 def cubic_function(x):
+    """
+    Cubic function: f(x) = -1.38x³ - 5.42x² + 2.57x + 10.95.
+    
+    Parameters:
+    x: float
+        Input value
+        
+    Returns:
+    float
+        Function value at x
+    """
     return -1.38*x**3 - 5.42*x**2 + 2.57*x + 10.95
 
 
 def f_prime(x):
+    """
+    First derivative of the cubic function.
+    
+    Parameters:
+    x: float
+        Input value
+        
+    Returns:
+    float
+        Derivative value at x
+    """
     return -4.14*x**2 - 10.84*x + 2.57
 
 
 def f_double_prime(x):
+    """
+    Second derivative of the cubic function.
+    
+    Parameters:
+    x: float
+        Input value
+        
+    Returns:
+    float
+        Second derivative value at x
+    """
     return -8.28*x - 10.84
 
 
 def bisection_method(f, a, b, eps=1e-3, max_iter=100):
+    """
+    Find root of function using bisection method.
+    
+    Parameters:
+    f: callable
+        Function to find root of
+    a: float
+        Left interval boundary
+    b: float
+        Right interval boundary
+    eps: float, optional
+        Convergence tolerance (default: 1e-3)
+    max_iter: int, optional
+        Maximum number of iterations (default: 100)
+        
+    Returns:
+    tuple
+        (root, table) where root is the found root or None,
+        and table is the iteration history
+    """
     table = PrettyTable()
     table.field_names = ["Iteration", "a", "b", "x", "f(a)", "f(b)", "f(x)", "|b-a|"]
     if f(a)*f(b) > 0:
@@ -201,6 +321,28 @@ def bisection_method(f, a, b, eps=1e-3, max_iter=100):
 
 
 def combined_method(f, f_prime, a, b, eps=1e-5, max_iter=100):
+    """
+    Find root using combined chord and tangent method.
+    
+    Parameters:
+    f: callable
+        Function to find root of
+    f_prime: callable
+        Derivative of the function
+    a: float
+        Left interval boundary
+    b: float
+        Right interval boundary
+    eps: float, optional
+        Convergence tolerance (default: 1e-5)
+    max_iter: int, optional
+        Maximum number of iterations (default: 100)
+        
+    Returns:
+    tuple
+        (root, table) where root is the found root,
+        and table is the iteration history
+    """
     table = PrettyTable()
     table.field_names = ["Iteration", "x_chord", "x_tangent", "f(x_chord)", "f(x_tangent)", "|diff|"]
     x_chord, x_tangent = a, b
@@ -292,14 +434,53 @@ for i, root in enumerate(real_roots):
         print(f"Check: f({root:.3f}) = {cubic_function(root):.3f}")
 
 def first_equation(x, y):
+    """
+    First equation of the system: sin(x) + 2y - 2 = 0.
+    
+    Parameters:
+    x: float
+        x coordinate
+    y: float
+        y coordinate
+        
+    Returns:
+    float
+        Function value
+    """
     return np.sin(x) + 2*y - 2
 
 
 def second_equation(x, y):
+    """
+    Second equation of the system: 2x + cos(y-1) - 0.7 = 0.
+    
+    Parameters:
+    x: float
+        x coordinate
+    y: float
+        y coordinate
+        
+    Returns:
+    float
+        Function value
+    """
     return 2*x + np.cos(y-1) - 0.7
 
 
 def jacobian(x, y):
+    """
+    Compute Jacobian matrix for the system of equations.
+    
+    Parameters:
+    x: float
+        x coordinate
+    y: float
+        y coordinate
+        
+    Returns:
+    numpy.ndarray
+        2x2 Jacobian matrix
+    """
     df1_dx = np.cos(x)
     df1_dy = 2
     df2_dx = 2
@@ -309,6 +490,30 @@ def jacobian(x, y):
 
 
 def newton_system(f1, f2, jacobian, x0, y0, eps=1e-4, max_iter=100):
+    """
+    Solve system of equations using Newton's method.
+    
+    Parameters:
+    f1: callable
+        First equation f1(x,y)
+    f2: callable
+        Second equation f2(x,y)
+    jacobian_func: callable
+        Function to compute Jacobian matrix
+    x0: float
+        Initial x guess
+    y0: float
+        Initial y guess
+    eps: float, optional
+        Convergence tolerance (default: 1e-4)
+    max_iter: int, optional
+        Maximum number of iterations (default: 100)
+        
+    Returns:
+    tuple
+        (solution, table, iterations) where solution is (x,y) or None,
+        table is iteration history, iterations is number of iterations
+    """
     table = PrettyTable()
     table.field_names = ["Iteration", "x", "y", "f1(x,y)", "f2(x,y)", "||Δ||"]
     x, y = x0, y0
@@ -334,6 +539,7 @@ def newton_system(f1, f2, jacobian, x0, y0, eps=1e-4, max_iter=100):
         x, y = x_new, y_new
 
     return (x, y), table, max_iter
+
 
 print("Function analysis")
 print("System of equations:")
