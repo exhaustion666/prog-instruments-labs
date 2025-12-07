@@ -7,11 +7,13 @@ from scipy.optimize import fsolve
 
 first_matrix = np.random.randint(-8, 9, (3, 3))
 print("Matrix A: ", "\n", first_matrix)
+
 def gram_schmidt_qr(A):
     n = A.shape[1]
     m = A.shape[0]
     Q = np.zeros((m, n), dtype=float)
     cnt = 0
+
     for a in A.T:
         u = np.copy(a)
         for i in range(0, cnt):
@@ -19,8 +21,11 @@ def gram_schmidt_qr(A):
         e = u/np.linalg.norm(u)
         Q[:, cnt] = e
         cnt += 1
+
     R = np.dot(Q.T, A)
+
     return Q, R
+
 
 def gram_schmidt_partial(A):
     A = np.array(A, dtype=float)
@@ -29,9 +34,12 @@ def gram_schmidt_partial(A):
     R = np.zeros((2, n))
     v1 = A[:, 0].copy()
     R[0, 0] = np.linalg.norm(v1)
+
     if R[0, 0] > 1e-10:
         Q[:, 0] = v1 / R[0, 0]
-    else: Q[:, 0] = v1
+    else: 
+        Q[:, 0] = v1
+
     if Q[0, 0] < 0:
         Q[:, 0] = -Q[:, 0]
         R[0, 0] = -R[0, 0]
@@ -39,19 +47,26 @@ def gram_schmidt_partial(A):
     R[0, 1] = np.dot(Q[:, 0], A[:, 1])
     v2 -= R[0, 1] * Q[:, 0]
     R[1, 1] = np.linalg.norm(v2)
+
     if R[1, 1] > 1e-10:
         Q[:, 1] = v2/R[1, 1]
-    else: Q[:, 1] = v2
+    else: 
+        Q[:, 1] = v2
+
     if Q[0, 1] < 0:
         Q[:, 1] = -Q[:, 1]
         R[0, 1] = -R[ 0, 1 ]
         R[1, 1]= -R[ 1, 1 ]
+
     for j in range(2, n):
         R[0, j] = np.dot(Q[:, 0], A[:, j])
         R[1, j] = np.dot(Q[:, 1], A[:, j])
     Q = -Q
     R = -R
+
     return Q, R
+
+
 np.set_printoptions(precision=4, suppress=True)
 q1_matrix, r1_matrix = gram_schmidt_qr(first_matrix)
 print("Matrix Q: ", "\n", q1_matrix, "\n", "Matrix R: ", "\n", r1_matrix)
@@ -62,7 +77,6 @@ second_matrix = np.array([
     [5.7, 3.6, 12.4, 2.3],
     [6.8, 13.2, 6.3, 8.7]
 ])
-
 first_solution = np.array([8.4, 4.5, 3.3, 14.3])
 
 def solve_qr(A, b):
@@ -70,6 +84,7 @@ def solve_qr(A, b):
     b_hat = np.dot(Q.T, b)
     n = len(b_hat)
     x = np.zeros(n)
+
     for i in range(n-1, -1, -1):
         x[i] = b_hat[i]
         for j in range(i+1, n):
@@ -77,6 +92,7 @@ def solve_qr(A, b):
         x[i] /= R[i, i]
     
     return x
+
 
 q2_matrix, r2_matrix = gram_schmidt_qr(second_matrix)
 print("\nMatrix Q:")
@@ -90,17 +106,19 @@ print(f"Numpy solution: x = {np_solution}")
 
 def check_diagonal_dominance(A):
     n = len(A)
+
     for i in range(n):
         diagonal = abs(A[i][i])
         row_sum = sum(abs(A[i][j]) for j in range(n) if j != i)
         if diagonal <= row_sum:
             return False
+        
     return True
+
 
 def seidel_method(A, b, eps=1e-3, max_iter=100):
     n = len(A)
     x = np.zeros(n)
-    
     table = PrettyTable()
     table.field_names = ["Iteration"] + [f"x{i + 1}" for i in range(n)] + ["Epsilon"]
     
@@ -119,15 +137,18 @@ def seidel_method(A, b, eps=1e-3, max_iter=100):
             print(table)
             return x_new
         x = x_new
+
     print(table)
+
     return x
+
 
 third_matrix = np.array([
     [3.1, 2.8, 4.9], [1.9, 4.1, 2.1],
     [7.5, 3.8, 4.8]
 ])
-
 second_solution = np.array([0.2, 2.1, 5.6])
+
 if not check_diagonal_dominance(third_matrix):
     A = np.array([
         [7.5, 3.8, 4.8], [1.9, 4.1, 2.1],
@@ -137,41 +158,53 @@ if not check_diagonal_dominance(third_matrix):
 else:
     A = third_matrix
     b = second_solution
+
 print("\nZeidel Solution: ")
 solution = seidel_method(A, b)
 print(f"\nSolution: ")
+
 for i, val in enumerate(solution):
     print(f"x{i+1} = {val:.6f}")
+
 print("Linalg solve: ", np.linalg.solve(third_matrix, second_solution))
 
 def cubic_function(x):
     return -1.38*x**3 - 5.42*x**2 + 2.57*x + 10.95
 
+
 def f_prime(x):
     return -4.14*x**2 - 10.84*x + 2.57
 
+
 def f_double_prime(x):
     return -8.28*x - 10.84
+
 
 def bisection_method(f, a, b, eps=1e-3, max_iter=100):
     table = PrettyTable()
     table.field_names = ["Iteration", "a", "b", "x", "f(a)", "f(b)", "f(x)", "|b-a|"]
     if f(a)*f(b) > 0:
         return None, "Function has same signs at interval endpoints"
+    
     for i in range(max_iter):
         x = (a+b)/2
         fa, fb, fx = f(a), f(b), f(x)
         table.add_row([i+1, f"{a:.6f}", f"{b:.6f}", f"{x:.6f}",  f"{fa:.6f}", f"{fb:.6f}", f"{fx:.6f}", f"{abs(b-a):.6f}"])
         if abs(b-a) < eps:
             return x, table
-        if f(a)*f(x) < 0:  b = x
-        else: a = x
+        if f(a)*f(x) < 0:  
+            b = x
+        else: 
+            a = x
+
     return x, table
+
 
 def combined_method(f, f_prime, a, b, eps=1e-5, max_iter=100):
     table = PrettyTable()
     table.field_names = ["Iteration", "x_chord", "x_tangent", "f(x_chord)", "f(x_tangent)", "|diff|"]
     x_chord, x_tangent = a, b
+
     for i in range(max_iter):
         x_chord_new = x_chord - f(x_chord)*(b-x_chord) / (f(b)-f(x_chord))
         x_tangent_new = x_tangent - f(x_tangent)/f_prime(x_tangent)
@@ -180,7 +213,9 @@ def combined_method(f, f_prime, a, b, eps=1e-5, max_iter=100):
         if diff < eps:
             return (x_chord_new+x_tangent_new)/2, table
         x_chord, x_tangent = x_chord_new, x_tangent_new
+
     return (x_chord+x_tangent)/2, table
+
 
 x = np.linspace(-5, 3, 1000)
 y = cubic_function(x)
@@ -201,6 +236,7 @@ test_points=[
             -5, -4, -3, -2, 
              -1, 0, 1, 
              2, 3]
+
 for point in test_points:
     fx = cubic_function(point)
     fpx = f_prime(point)
@@ -211,6 +247,7 @@ for point in test_points:
 print(analysis_table)
 print("\nRoot intervals")
 intervals = []
+
 for i in range(len(test_points)-1):
     if cubic_function(test_points[i])*cubic_function(test_points[i+1]) <= 0:
         intervals.append((test_points[i], test_points[i+1]))
@@ -224,8 +261,10 @@ for i, (a, b) in enumerate(intervals):
     print(f"f({b}) = {cubic_function(b):.3f}")
     print(f"f({a}) * f({b}) = {cubic_function(a) * cubic_function(b):.3f}")
     
-    if cubic_function(a)*cubic_function(b) < 0: print("Condition f(a)*f(b) < 0 is satisfied")
-    else:  print("Condition f(a)*f(b) < 0 is not satisfied")
+    if cubic_function(a)*cubic_function(b) < 0: 
+        print("Condition f(a)*f(b) < 0 is satisfied")
+    else:  
+        print("Condition f(a)*f(b) < 0 is not satisfied")
     
     print(f"\nBisection method")
     root_bisection, table_bisection = bisection_method(cubic_function, a, b, eps=1e-3)
@@ -233,7 +272,8 @@ for i, (a, b) in enumerate(intervals):
         print(table_bisection)
         print(f"Found root: x = {root_bisection:.3f}")
         print(f"Check: f({root_bisection:.3f}) = {cubic_function(root_bisection):.3f}")
-    else: print(table_bisection)
+    else: 
+        print(table_bisection)
     
     print(f"\nCombined method")
     root_combined, table_combined = combined_method(cubic_function, f_prime, a, b, eps=1e-5)
@@ -245,6 +285,7 @@ print(f"\nNumpy Solution")
 coefficients = [-1.38, -5.42, 2.57, 10.95]
 roots_numpy = np.roots(coefficients)
 real_roots = roots_numpy[np.isreal(roots_numpy)].real
+
 for i, root in enumerate(real_roots):
     if -5 <= root <= 3:
         print(f"Root {i+1}: x = {root:.3f}")
@@ -253,15 +294,19 @@ for i, root in enumerate(real_roots):
 def first_equation(x, y):
     return np.sin(x) + 2*y - 2
 
+
 def second_equation(x, y):
     return 2*x + np.cos(y-1) - 0.7
+
 
 def jacobian(x, y):
     df1_dx = np.cos(x)
     df1_dy = 2
     df2_dx = 2
     df2_dy = -np.sin(y-1)
+
     return np.array([[df1_dx, df1_dy], [df2_dx, df2_dy]])
+
 
 def newton_system(f1, f2, jacobian, x0, y0, eps=1e-4, max_iter=100):
     table = PrettyTable()
@@ -282,12 +327,12 @@ def newton_system(f1, f2, jacobian, x0, y0, eps=1e-4, max_iter=100):
         x_new = x-dx
         y_new = y-dy
         delta_norm = np.sqrt(dx**2 + dy**2)
-        
         table.add_row([i+1, f"{x_new:.8f}", f"{y_new:.8f}",  f"{f1(x_new, y_new):.8f}", f"{f2(x_new, y_new):.8f}",  f"{delta_norm:.8f}"])
         
         if delta_norm < eps:
             return (x_new, y_new), table, i+1
         x, y = x_new, y_new
+
     return (x, y), table, max_iter
 
 print("Function analysis")
