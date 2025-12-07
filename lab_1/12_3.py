@@ -42,7 +42,8 @@ def gram_schmidt_qr(A):
 
 def gram_schmidt_partial(A):
     """
-    Perform partial QR decomposition using Gram-Schmidt for matrices with 2 columns.
+    Perform partial QR decomposition using 
+    Gram-Schmidt for matrices with 2 columns.
     
     Parameters:
     A: numpy.ndarray
@@ -99,7 +100,8 @@ print("Matrix Q: ", "\n", q1_matrix, "\n", "Matrix R: ", "\n", r1_matrix)
 print("np.linalg: ", "\n", np.linalg.qr(first_matrix))
 
 second_matrix = np.array([
-    [8.2, 3.2, 14.2, 14.8], [5.6, 12, 15, 6.4],
+    [8.2, 3.2, 14.2, 14.8], 
+    [5.6, 12, 15, 6.4],
     [5.7, 3.6, 12.4, 2.3],
     [6.8, 13.2, 6.3, 8.7]
 ])
@@ -211,14 +213,16 @@ def seidel_method(A, b, eps=1e-3, max_iter=100):
 
 
 third_matrix = np.array([
-    [3.1, 2.8, 4.9], [1.9, 4.1, 2.1],
+    [3.1, 2.8, 4.9], 
+    [1.9, 4.1, 2.1],
     [7.5, 3.8, 4.8]
 ])
 second_solution = np.array([0.2, 2.1, 5.6])
 
 if not check_diagonal_dominance(third_matrix):
     A = np.array([
-        [7.5, 3.8, 4.8], [1.9, 4.1, 2.1],
+        [7.5, 3.8, 4.8], 
+        [1.9, 4.1, 2.1],
         [3.1, 2.8, 4.9]
     ])
     b = np.array([5.6, 2.1, 0.2])
@@ -309,7 +313,16 @@ def bisection_method(f, a, b, eps=1e-3, max_iter=100):
     for i in range(max_iter):
         x = (a+b)/2
         fa, fb, fx = f(a), f(b), f(x)
-        table.add_row([i+1, f"{a:.6f}", f"{b:.6f}", f"{x:.6f}",  f"{fa:.6f}", f"{fb:.6f}", f"{fx:.6f}", f"{abs(b-a):.6f}"])
+        table.add_row([
+            i+1, 
+            f"{a:.6f}", 
+            f"{b:.6f}",   
+            f"{x:.6f}", 
+            f"{fa:.6f}", 
+            f"{fb:.6f}", 
+            f"{fx:.6f}", 
+            f"{abs(b-a):.6f}"
+        ])
         if abs(b-a) < eps:
             return x, table
         if f(a)*f(x) < 0:  
@@ -351,7 +364,14 @@ def combined_method(f, f_prime, a, b, eps=1e-5, max_iter=100):
         x_chord_new = x_chord - f(x_chord)*(b-x_chord) / (f(b)-f(x_chord))
         x_tangent_new = x_tangent - f(x_tangent)/f_prime(x_tangent)
         diff = abs(x_tangent_new-x_chord_new)
-        table.add_row([i+1, f"{x_chord_new:.3f}", f"{x_tangent_new:.3f}",  f"{f(x_chord_new):.3f}", f"{f(x_tangent_new):.3f}", f"{diff:.3f}"])
+        table.add_row([
+            i+1, 
+            f"{x_chord_new:.3f}", 
+            f"{x_tangent_new:.3f}",  
+            f"{f(x_chord_new):.3f}", 
+            f"{f(x_tangent_new):.3f}", 
+            f"{diff:.3f}"
+        ])
         if diff < eps:
             return (x_chord_new+x_tangent_new)/2, table
         x_chord, x_tangent = x_chord_new, x_tangent_new
@@ -374,10 +394,7 @@ print("\nInterval Analysis")
 analysis_table = PrettyTable()
 analysis_table.field_names = ["x", "f(x)", "f'(x)", "f''(x)", "Sign f(x)"]
 
-test_points=[
-            -5, -4, -3, -2, 
-             -1, 0, 1, 
-             2, 3]
+test_points = [-5, -4, -3, -2, -1, 0, 1, 2, 3]
 
 for point in test_points:
     fx = cubic_function(point)
@@ -394,7 +411,8 @@ for i in range(len(test_points)-1):
     if cubic_function(test_points[i])*cubic_function(test_points[i+1]) <= 0:
         intervals.append((test_points[i], test_points[i+1]))
         print(f"Root in interval [{test_points[i]}, {test_points[i+1]}]")
-        print(f"f({test_points[i]}) = {cubic_function(test_points[i]):.3f}, f({test_points[i+1]}) = {cubic_function(test_points[i+1]):.3f}")
+        print(f"f({test_points[i]}) = {cubic_function(test_points[i]):.3f}, 
+              f({test_points[i+1]}) = {cubic_function(test_points[i+1]):.3f}")
 
 for i, (a, b) in enumerate(intervals):
     print(f"\nSolution for root in interval [{a}, {b}]")
@@ -418,7 +436,11 @@ for i, (a, b) in enumerate(intervals):
         print(table_bisection)
     
     print(f"\nCombined method")
-    root_combined, table_combined = combined_method(cubic_function, f_prime, a, b, eps=1e-5)
+    root_combined, table_combined = combined_method(
+        cubic_function, 
+        f_prime, a, 
+        b, eps=1e-5
+    )
     print(table_combined)
     print(f"Found root: x = {root_combined:.3f}")
     print(f"Check: f({root_combined:.3f}) = {cubic_function(root_combined):.3f}")
@@ -532,7 +554,14 @@ def newton_system(f1, f2, jacobian, x0, y0, eps=1e-4, max_iter=100):
         x_new = x-dx
         y_new = y-dy
         delta_norm = np.sqrt(dx**2 + dy**2)
-        table.add_row([i+1, f"{x_new:.8f}", f"{y_new:.8f}",  f"{f1(x_new, y_new):.8f}", f"{f2(x_new, y_new):.8f}",  f"{delta_norm:.8f}"])
+        table.add_row([
+            i+1, 
+            f"{x_new:.8f}", 
+            f"{y_new:.8f}", 
+              f"{f1(x_new, y_new):.8f}", 
+              f"{f2(x_new, y_new):.8f}",  
+              f"{delta_norm:.8f}"
+        ])
         
         if delta_norm < eps:
             return (x_new, y_new), table, i+1
@@ -572,8 +601,14 @@ print(f"[ {jacobian_matrix[1,0]:.6f}  {jacobian_matrix[1,1]:.6f} ]")
 
 print("\nLinear system")
 print("System to solve for Δx, Δy:")
-print(f"[ {jacobian_matrix[0,0]:.6f}  {jacobian_matrix[0,1]:.6f} ] [Δx]   [{-first_equation(x0,y0):.6f}]")
-print(f"[ {jacobian_matrix[1,0]:.6f}  {jacobian_matrix[1,1]:.6f} ] [Δy] = [{-second_equation(x0,y0):.6f}]")
+print(f"[ {jacobian_matrix[0,0]:.6f}  {jacobian_matrix[0,1]:.6f} ] 
+      [Δx]   [{-first_equation(x0,y0):.6f}]")
+print(f"[ {jacobian_matrix[1,0]:.6f}  {jacobian_matrix[1,1]:.6f} ] 
+      [Δy] = [{-second_equation(x0,y0):.6f}]")
 print("\nNewton's method solution")
-solution, table, iterations = newton_system(first_equation, second_equation, jacobian, x0, y0)
+solution, table, iterations = newton_system(
+    first_equation, 
+    second_equation,
+    jacobian, x0, y0
+)
 print(table)
