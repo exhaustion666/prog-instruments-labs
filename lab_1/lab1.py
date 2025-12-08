@@ -192,10 +192,10 @@ def seidel_method(
             sum1 = sum(coefficient_matrix[i][j] * new_solution[j] for j in range(i))
             sum2 = sum(coefficient_matrix[i][j] * solution[j] for j in range(i+1, n))
             new_solution[i] = ((right_side_vector[i] 
-                                        - sum1 
-                                        - sum2) 
-                                        / coefficient_matrix[i][i])
-            error = abs(new_solution[i] - solution[i])
+                                - sum1 
+                                - sum2) 
+                                / coefficient_matrix[i][i])
+            error = abs(new_solution[i]-solution[i])
             if error > max_error:
                 max_error = error
         iteration_number = k + 1
@@ -283,8 +283,7 @@ def bisection_method(
         function, left_boundary, 
         right_boundary, 
         epsilon=1e-3, 
-        max_iterations=100
-    ):
+        max_iterations=100):
     """
     Find root of function using bisection method.
     
@@ -302,7 +301,7 @@ def bisection_method(
     table = PrettyTable()
     table.field_names = ["Iteration", "a", "b", "x", "f(a)", "f(b)", "f(x)", "|b-a|"]
     
-    if function(left_boundary) * function(right_boundary) > 0:
+    if function(left_boundary)*function(right_boundary) > 0:
         return None, "Function has same signs at interval endpoints"
 
     for i in range(max_iterations):
@@ -311,7 +310,7 @@ def bisection_method(
         f_b = function(right_boundary)
         f_x = function(x)
         table.add_row([
-            i + 1,
+            i+1,
             f"{left_boundary:.6f}",
             f"{right_boundary:.6f}",
             f"{x:.6f}",
@@ -320,9 +319,9 @@ def bisection_method(
             f"{f_x:.6f}",
             f"{abs(right_boundary - left_boundary):.6f}"
         ])
-        if abs(right_boundary - left_boundary) < epsilon:
+        if abs(right_boundary-left_boundary) < epsilon:
             return x, table
-        if function(left_boundary) * function(x) < 0:
+        if function(left_boundary)*function(x) < 0:
             right_boundary = x
         else:
             left_boundary = x
@@ -365,14 +364,14 @@ def combined_method(
 
     for i in range(max_iterations):
         x_chord_new = (x_chord 
-                                  - function(x_chord) 
-                                  * (right_boundary - x_chord) 
-                                  / (function(right_boundary) 
-                                  - function(x_chord)))
+                       - function(x_chord) 
+                       * (right_boundary - x_chord) 
+                       / (function(right_boundary)
+                       - function(x_chord)))
         x_tangent_new = x_tangent - function(x_tangent)/derivative_function(x_tangent)
         diff = abs(x_tangent_new - x_chord_new)
         table.add_row([
-            i + 1,
+            i+1,
             f"{x_chord_new:.3f}",
             f"{x_tangent_new:.3f}",
             f"{function(x_chord_new):.3f}",
@@ -380,10 +379,10 @@ def combined_method(
             f"{diff:.3f}"
         ])
         if diff < epsilon:
-            return (x_chord_new + x_tangent_new) / 2, table
+            return (x_chord_new+x_tangent_new) / 2, table
         x_chord, x_tangent = x_chord_new, x_tangent_new
 
-    return (x_chord + x_tangent) / 2, table
+    return (x_chord+x_tangent) / 2, table
 
 
 x_values = np.linspace(-5, 3, 1000)
@@ -420,12 +419,12 @@ print(analysis_table)
 print("\nRoot intervals")
 intervals = []
 
-for i in range(len(test_points) - 1):
-    if cubic_function(test_points[i]) * cubic_function(test_points[i + 1]) <= 0:
-        intervals.append((test_points[i], test_points[i + 1]))
-        print(f"Root in interval [{test_points[i]}, {test_points[i + 1]}]")
-        print(f"f({test_points[i]}) = {cubic_function(test_points[i]):.3f}, "
-              f"f({test_points[i + 1]}) = {cubic_function(test_points[i + 1]):.3f}")
+for i in range(len(test_points)-1):
+    if cubic_function(test_points[i]) * cubic_function(test_points[i+1]) <= 0:
+        intervals.append((test_points[i], test_points[i+1]))
+        print(f"Root in interval [{test_points[i]}, {test_points[i+1]}]")
+        print(f"f({test_points[i]}) = {cubic_function(test_points[i]):.3f},"
+              f"f({test_points[i+1]}) = {cubic_function(test_points[i+1]):.3f}")
 
 for i, (left_bound, right_bound) in enumerate(intervals):
     print(f"\nSolution for root in interval [{left_bound}, {right_bound}]")
@@ -433,12 +432,12 @@ for i, (left_bound, right_bound) in enumerate(intervals):
     print(f"f({left_bound}) = {cubic_function(left_bound):.3f}")
     print(f"f({right_bound}) = {cubic_function(right_bound):.3f}")
     print(f"f({left_bound}) \
-        * f({right_bound}) \
-        = {cubic_function(left_bound) \
-        * cubic_function(right_bound):.3f}"
+          * f({right_bound}) \
+          = {cubic_function(left_bound) \
+          * cubic_function(right_bound):.3f}"
     )
 
-    if cubic_function(left_bound) * cubic_function(right_bound) < 0:
+    if cubic_function(left_bound)*cubic_function(right_bound) < 0:
         print("Condition f(a)*f(b) < 0 is satisfied")
     else:
         print("Condition f(a)*f(b) < 0 is not satisfied")
@@ -477,7 +476,7 @@ real_roots = roots_numpy[np.isreal(roots_numpy)].real
 
 for i, root in enumerate(real_roots):
     if -5 <= root <= 3:
-        print(f"Root {i + 1}: x = {root:.3f}")
+        print(f"Root {i+1}: x = {root:.3f}")
         print(f"Check: f({root:.3f}) = {cubic_function(root):.3f}")
 
 
@@ -492,7 +491,7 @@ def first_system_equation(x_value, y_value):
     :returns:
         float - Function value
     """
-    return np.sin(x_value) + 2 * y_value - 2
+    return np.sin(x_value) + 2*y_value - 2
 
 
 def second_system_equation(x_value, y_value):
@@ -506,7 +505,7 @@ def second_system_equation(x_value, y_value):
     :returns:
         float - Function value
     """
-    return 2 * x_value + np.cos(y_value - 1) - 0.7
+    return 2*x_value + np.cos(y_value - 1) - 0.7
 
 
 def jacobian_matrix(x_value, y_value):
@@ -579,7 +578,7 @@ def newton_system_solver(
         delta_norm = np.sqrt(delta_x**2 + delta_y**2)
         
         table.add_row([
-            i + 1,
+            i+1,
             f"{x_new:.8f}",
             f"{y_new:.8f}",
             f"{equation1(x_new, y_new):.8f}",
@@ -588,7 +587,7 @@ def newton_system_solver(
         ])
 
         if delta_norm < epsilon:
-            return (x_new, y_new), table, i + 1
+            return (x_new, y_new), table, i+1
         
         x_current, y_current = x_new, y_new
 
