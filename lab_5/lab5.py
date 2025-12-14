@@ -221,12 +221,12 @@ def seidel_method(A, b, eps=1e-3, max_iter=100):
         table.add_row([k+1] + [f"{val:.6f}" for val in x_new] + [f"{max_error:.6f}"])
         if max_error < eps:
             logger.info(f"Seidel method converged in {k+1} iterations")
-            print(table)
+            logger.info(f"Seidel method iteration table:\n{table}")
             return x_new
         x = x_new
 
     logger.warning(f"Seidel method did not converge in {max_iter} iterations")
-    print(table)
+    logger.info(f"Seidel method iteration table:\n{table}")
 
     return x
 
@@ -258,7 +258,7 @@ solution = seidel_method(A, b)
 logger.info(f"Seidel method solution: {solution}")
 
 for i, val in enumerate(solution):
-    print(f"x{i+1} = {val:.6f}")
+    logger.info(f"x{i+1} = {val:.6f}")
 
 numpy_solution = np.linalg.solve(third_matrix, second_solution)
 logger.info(f"NumPy solution for original system: {numpy_solution}")
@@ -422,9 +422,9 @@ for i in range(len(test_points)-1):
 for i, (a, b) in enumerate(intervals):
     logger.info(f"Solution for root in interval [{a}, {b}]")
     logger.info(f"Convergence conditions check:")
-    print(f"f({a}) = {cubic_function(a):.3f}")
-    print(f"f({b}) = {cubic_function(b):.3f}")
-    print(f"f({a}) * f({b}) = {cubic_function(a) * cubic_function(b):.3f}")
+    logger.info(f"f({a}) = {cubic_function(a):.3f}")
+    logger.info(f"f({b}) = {cubic_function(b):.3f}")
+    logger.info(f"f({a}) * f({b}) = {cubic_function(a) * cubic_function(b):.3f}")
     
     if cubic_function(a)*cubic_function(b) < 0: 
         logger.info(f"Convergence condition satisfied for interval [{a}, {b}]")
@@ -435,8 +435,9 @@ for i, (a, b) in enumerate(intervals):
     root_bisection, table_bisection = bisection_method(cubic_function, a, b, eps=1e-3)
     if root_bisection is not None:
         logger.info(f"Bisection root: {root_bisection:.6f}, f(root)={cubic_function(root_bisection):.6f}")
+        logger.info(f"Bisection method table:\n{table_bisection}")
     else: 
-        print(table_bisection)
+        logger.info(f"Bisection method table:\n{table_bisection}")
     
     logger.info(f"Combined method")
     root_combined, table_combined = combined_method(
@@ -444,7 +445,7 @@ for i, (a, b) in enumerate(intervals):
         f_prime, a, 
         b, eps=1e-5
     )
-    logger.info(f"{table_combined}")
+    logger.info(f"Combined method table:\n{table_combined}")
     logger.info(f"Combined method root: {root_combined:.6f}, f(root)={cubic_function(root_combined):.6f}")
 
 logger.info(f"Numpy Solution")
@@ -562,8 +563,8 @@ def newton_system(f1, f2, jacobian, x0, y0, eps=1e-4, max_iter=100):
 
 
 logger.info("System of Equations Analysis")
-print("f1(x,y) = sin(x) + 2y - 2 = 0")
-print("f2(x,y) = 2x + cos(y-1) - 0.7 = 0")
+logger.info("f1(x,y) = sin(x) + 2y - 2 = 0")
+logger.info("f2(x,y) = 2x + cos(y-1) - 0.7 = 0")
 
 x = np.linspace(-2, 2, 100)
 y = np.linspace(-2, 2, 100)
@@ -575,9 +576,9 @@ z2 = second_equation(X, Y)
 x0, y0 = 0.5, 0.8
 logger.info("Jacobian matrix")
 jacobian_matrix = jacobian(x0, y0)
-print("J(x,y) =")
-print(f"[ cos(x)      2     ]")
-print(f"[   2     -sin(y-1) ]")
+logger.info("J(x,y) =")
+logger.info("[ cos(x)      2     ]")
+logger.info("[   2     -sin(y-1) ]")
 logger.info(f"Initial guess: ({x0}, {y0})")
 logger.info(f"Jacobian at initial point:\n{jacobian_matrix}")
 
@@ -587,4 +588,6 @@ solution, table, iterations = newton_system(
     second_equation,
     jacobian, x0, y0
 )
-logger.info(f"{table}")
+logger.info(f"Newton's method iteration table:\n{table}")
+logger.info("f1(x,y) = sin(x) + 2y - 2 = 0")
+logger.info("f2(x,y) = 2x + cos(y-1) - 0.7 = 0")
