@@ -6,8 +6,20 @@ from prettytable import PrettyTable
 from scipy.optimize import fsolve
 
 
-first_matrix = np.random.randint(-8, 9, (3, 3))
-print("Matrix A: ", "\n", first_matrix)
+FIRST_MATRIX = np.random.randint(-8, 9, (3, 3))
+SECOND_MATRIX = np.array([
+    [8.2, 3.2, 14.2, 14.8],
+    [5.6, 12, 15, 6.4],
+    [5.7, 3.6, 12.4, 2.3],
+    [6.8, 13.2, 6.3, 8.7]
+])
+FIRST_SOLUTION = np.array([8.4, 4.5, 3.3, 14.3])
+THIRD_MATRIX = np.array([
+    [3.1, 2.8, 4.9],
+    [1.9, 4.1, 2.1],
+    [7.5, 3.8, 4.8]
+])
+SECOND_SOLUTION = np.array([0.2, 2.1, 5.6])
 
 
 def gram_schmidt_qr(matrix):
@@ -92,20 +104,6 @@ def gram_schmidt_partial(matrix):
     return q_matrix, r_matrix
 
 
-np.set_printoptions(precision=4, suppress=True)
-q1_matrix, r1_matrix = gram_schmidt_qr(first_matrix)
-print("Matrix Q: ", "\n", q1_matrix, "\n", "Matrix R: ", "\n", r1_matrix)
-print("np.linalg: ", "\n", np.linalg.qr(first_matrix))
-
-second_matrix = np.array([
-    [8.2, 3.2, 14.2, 14.8],
-    [5.6, 12, 15, 6.4],
-    [5.7, 3.6, 12.4, 2.3],
-    [6.8, 13.2, 6.3, 8.7]
-])
-first_solution = np.array([8.4, 4.5, 3.3, 14.3])
-
-
 def solve_qr(coefficient_matrix, right_side_vector):
     """
     Solve linear system Ax = b using QR decomposition.
@@ -129,17 +127,6 @@ def solve_qr(coefficient_matrix, right_side_vector):
         solution[i] /= r_matrix[i, i]
 
     return solution
-
-
-q2_matrix, r2_matrix = gram_schmidt_qr(second_matrix)
-print("\nMatrix Q:")
-print(q2_matrix)
-print("\nMatrix R:")
-print(r2_matrix)
-qr_matrix = solve_qr(second_matrix, first_solution)
-print(f"\nSystem solution (QR method): x = {qr_matrix}")
-np_solution = np.linalg.solve(second_matrix, first_solution)
-print(f"Numpy solution: x = {np_solution}")
 
 
 def check_diagonal_dominance(matrix):
@@ -210,34 +197,6 @@ def seidel_method(
     print(table)
 
     return solution
-
-
-third_matrix = np.array([
-    [3.1, 2.8, 4.9],
-    [1.9, 4.1, 2.1],
-    [7.5, 3.8, 4.8]
-])
-second_solution = np.array([0.2, 2.1, 5.6])
-
-if not check_diagonal_dominance(third_matrix):
-    coefficient_matrix = np.array([
-        [7.5, 3.8, 4.8],
-        [1.9, 4.1, 2.1],
-        [3.1, 2.8, 4.9]
-    ])
-    right_side_vector = np.array([5.6, 2.1, 0.2])
-else:
-    coefficient_matrix = third_matrix
-    right_side_vector = second_solution
-
-print("\nZeidel Solution: ")
-solution = seidel_method(coefficient_matrix, right_side_vector)
-print(f"\nSolution: ")
-
-for i, val in enumerate(solution):
-    print(f"x{i+1} = {val:.6f}")
-
-print("Linalg solve: ", np.linalg.solve(third_matrix, second_solution))
 
 
 def cubic_function(x_value):
@@ -385,101 +344,6 @@ def combined_method(
     return (x_chord+x_tangent) / 2, table
 
 
-x_values = np.linspace(-5, 3, 1000)
-y_values = cubic_function(x_values)
-
-plt.figure(figsize=(12, 8))
-plt.plot(x_values, y_values, 'b-', linewidth=2)
-plt.axhline(y=0, color='k', linestyle='--', alpha=0.3)
-plt.grid(True, alpha=0.3)
-plt.xlabel('x')
-plt.ylabel('f(x)')
-plt.show()
-
-print("\nInterval Analysis")
-analysis_table = PrettyTable()
-analysis_table.field_names = ["x", "f(x)", "f'(x)", "f''(x)", "Sign f(x)"]
-
-test_points = [-5, -4, -3, -2, -1, 0, 1, 2, 3]
-
-for point in test_points:
-    f_x = cubic_function(point)
-    f_prime_x = first_derivative(point)
-    f_double_prime_x = second_derivative(point)
-    sign = "+" if f_x > 0 else "-" if f_x < 0 else "0"
-    analysis_table.add_row([
-        point, 
-        f"{f_x:.3f}", 
-        f"{f_prime_x:.3f}", 
-        f"{f_double_prime_x:.3f}", 
-        sign
-    ])
-
-print(analysis_table)
-print("\nRoot intervals")
-intervals = []
-
-for i in range(len(test_points)-1):
-    if cubic_function(test_points[i]) * cubic_function(test_points[i+1]) <= 0:
-        intervals.append((test_points[i], test_points[i+1]))
-        print(f"Root in interval [{test_points[i]}, {test_points[i+1]}]")
-        print(f"f({test_points[i]}) = {cubic_function(test_points[i]):.3f},"
-              f"f({test_points[i+1]}) = {cubic_function(test_points[i+1]):.3f}")
-
-for i, (left_bound, right_bound) in enumerate(intervals):
-    print(f"\nSolution for root in interval [{left_bound}, {right_bound}]")
-    print("\nConvergence conditions check:")
-    print(f"f({left_bound}) = {cubic_function(left_bound):.3f}")
-    print(f"f({right_bound}) = {cubic_function(right_bound):.3f}")
-    print(f"f({left_bound}) \
-          * f({right_bound}) \
-          = {cubic_function(left_bound) \
-          * cubic_function(right_bound):.3f}"
-    )
-
-    if cubic_function(left_bound)*cubic_function(right_bound) < 0:
-        print("Condition f(a)*f(b) < 0 is satisfied")
-    else:
-        print("Condition f(a)*f(b) < 0 is not satisfied")
-
-    print(f"\nBisection method")
-    root_bisection, table_bisection = bisection_method(
-        cubic_function, 
-        left_bound, 
-        right_bound, 
-        epsilon=1e-3
-    )
-    
-    if root_bisection is not None:
-        print(table_bisection)
-        print(f"Found root: x = {root_bisection:.3f}")
-        print(f"Check: f({root_bisection:.3f}) = {cubic_function(root_bisection):.3f}")
-    else:
-        print(table_bisection)
-
-    print(f"\nCombined method")
-    root_combined, table_combined = combined_method(
-        cubic_function,
-        first_derivative,
-        left_bound,
-        right_bound,
-        epsilon=1e-5
-    )
-    print(table_combined)
-    print(f"Found root: x = {root_combined:.3f}")
-    print(f"Check: f({root_combined:.3f}) = {cubic_function(root_combined):.3f}")
-
-print(f"\nNumpy Solution")
-coefficients = [-1.38, -5.42, 2.57, 10.95]
-roots_numpy = np.roots(coefficients)
-real_roots = roots_numpy[np.isreal(roots_numpy)].real
-
-for i, root in enumerate(real_roots):
-    if -5 <= root <= 3:
-        print(f"Root {i+1}: x = {root:.3f}")
-        print(f"Check: f({root:.3f}) = {cubic_function(root):.3f}")
-
-
 def first_system_equation(x_value, y_value):
     """
     First equation of the system: sin(x) + 2y - 2 = 0.
@@ -594,60 +458,202 @@ def newton_system_solver(
     return (x_current, y_current), table, max_iterations
 
 
-print("Function analysis")
-print("System of equations:")
-print("f1(x,y) = sin(x) + 2y - 2 = 0")
-print("f2(x,y) = 2x + cos(y-1) - 0.7 = 0")
+def main():
+    """
+    Main function for calculations.
 
-x_range = np.linspace(-2, 2, 100)
-y_range = np.linspace(-2, 2, 100)
-X_grid, Y_grid = np.meshgrid(x_range, y_range)
+    :params: None
+    
+    :returns: None
+    """
+    np.set_printoptions(precision=4, suppress=True)
+    q1_matrix, r1_matrix = gram_schmidt_qr(FIRST_MATRIX)
+    print("Matrix A: ", "\n", FIRST_MATRIX)
+    print("Matrix Q: ", "\n", q1_matrix, "\n", "Matrix R: ", "\n", r1_matrix)
+    print("np.linalg: ", "\n", np.linalg.qr(FIRST_MATRIX))
 
-z1_values = first_system_equation(X_grid, Y_grid)
-z2_values = second_system_equation(X_grid, Y_grid)
+    q2_matrix, r2_matrix = gram_schmidt_qr(SECOND_MATRIX)
+    print("\nMatrix Q:")
+    print(q2_matrix)
+    print("\nMatrix R:")
+    print(r2_matrix)
+    qr_matrix = solve_qr(SECOND_MATRIX, FIRST_SOLUTION)
+    print(f"\nSystem solution (QR method): x = {qr_matrix}")
+    np_solution = np.linalg.solve(SECOND_MATRIX, FIRST_SOLUTION)
+    print(f"Numpy solution: x = {np_solution}")
 
-plt.figure(figsize=(10, 8))
-contour1 = plt.contour(
-    X_grid, 
-    Y_grid, 
-    z1_values, 
-    levels=[0], 
-    colors='red', 
-    linewidths=2
-)
-contour2 = plt.contour(
-    X_grid, 
-    Y_grid, 
-    z2_values, 
-    levels=[0], 
-    colors='blue', 
-    linewidths=2
-)
-plt.grid(True, alpha=0.3)
-plt.show()
+    if not check_diagonal_dominance(THIRD_MATRIX):
+        coefficient_matrix = np.array([
+            [7.5, 3.8, 4.8],
+            [1.9, 4.1, 2.1],
+            [3.1, 2.8, 4.9]
+        ])
+        right_side_vector = np.array([5.6, 2.1, 0.2])
+    else:
+        coefficient_matrix = THIRD_MATRIX
+        right_side_vector = SECOND_SOLUTION
 
-x_initial, y_initial = 0.5, 0.8
-print("\nJacobian matrix")
-jacobian = jacobian_matrix(x_initial, y_initial)
-print("J(x,y) =")
-print(f"\nAt initial point (x0,y0) = ({x_initial},{y_initial}):")
-print(f"J({x_initial},{y_initial}) =")
-print(f"[ {jacobian[0, 0]:.6f}  {jacobian[0, 1]:.6f} ]")
-print(f"[ {jacobian[1, 0]:.6f}  {jacobian[1, 1]:.6f} ]")
+    print("\nZeidel Solution: ")
+    solution = seidel_method(coefficient_matrix, right_side_vector)
+    print(f"\nSolution: ")
 
-print("\nLinear system")
-print("System to solve for delta_x, delta_y:")
-print(f"[ {jacobian[0, 0]:.6f}  {jacobian[0, 1]:.6f} ] "
-      f"[delta_x] = [{-first_system_equation(x_initial, y_initial):.6f}]")
-print(f"[ {jacobian[1, 0]:.6f}  {jacobian[1, 1]:.6f} ] "
-      f"[delta_y] = [{-second_system_equation(x_initial, y_initial):.6f}]")
+    for i, val in enumerate(solution):
+        print(f"x{i+1} = {val:.6f}")
 
-print("\nNewton's method solution")
-solution, table, iterations = newton_system_solver(
-    first_system_equation,
-    second_system_equation,
-    jacobian_matrix,
-    x_initial,
-    y_initial
-)
-print(table)
+    print("Linalg solve: ", np.linalg.solve(THIRD_MATRIX, SECOND_SOLUTION))
+
+    x_values = np.linspace(-5, 3, 1000)
+    y_values = cubic_function(x_values)
+
+    plt.figure(figsize=(12, 8))
+    plt.plot(x_values, y_values, 'b-', linewidth=2)
+    plt.axhline(y=0, color='k', linestyle='--', alpha=0.3)
+    plt.grid(True, alpha=0.3)
+    plt.xlabel('x')
+    plt.ylabel('f(x)')
+    plt.show()
+
+    print("\nInterval Analysis")
+    analysis_table = PrettyTable()
+    analysis_table.field_names = ["x", "f(x)", "f'(x)", "f''(x)", "Sign f(x)"]
+
+    test_points = [-5, -4, -3, -2, -1, 0, 1, 2, 3]
+
+    for point in test_points:
+        f_x = cubic_function(point)
+        f_prime_x = first_derivative(point)
+        f_double_prime_x = second_derivative(point)
+        sign = "+" if f_x > 0 else "-" if f_x < 0 else "0"
+        analysis_table.add_row([
+            point, 
+            f"{f_x:.3f}", 
+            f"{f_prime_x:.3f}", 
+            f"{f_double_prime_x:.3f}", 
+            sign
+        ])
+
+    print(analysis_table)
+    print("\nRoot intervals")
+    intervals = []
+
+    for i in range(len(test_points)-1):
+        if cubic_function(test_points[i]) * cubic_function(test_points[i+1]) <= 0:
+            intervals.append((test_points[i], test_points[i+1]))
+            print(f"Root in interval [{test_points[i]}, {test_points[i+1]}]")
+            print(f"f({test_points[i]}) = {cubic_function(test_points[i]):.3f},"
+                  f"f({test_points[i+1]}) = {cubic_function(test_points[i+1]):.3f}")
+
+    for i, (left_bound, right_bound) in enumerate(intervals):
+        print(f"\nSolution for root in interval [{left_bound}, {right_bound}]")
+        print("\nConvergence conditions check:")
+        print(f"f({left_bound}) = {cubic_function(left_bound):.3f}")
+        print(f"f({right_bound}) = {cubic_function(right_bound):.3f}")
+        print(f"f({left_bound}) \
+              * f({right_bound}) \
+              = {cubic_function(left_bound) \
+              * cubic_function(right_bound):.3f}"
+        )
+
+        if cubic_function(left_bound)*cubic_function(right_bound) < 0:
+            print("Condition f(a)*f(b) < 0 is satisfied")
+        else:
+            print("Condition f(a)*f(b) < 0 is not satisfied")
+
+        print(f"\nBisection method")
+        root_bisection, table_bisection = bisection_method(
+            cubic_function, 
+            left_bound, 
+            right_bound, 
+            epsilon=1e-3
+        )
+        
+        if root_bisection is not None:
+            print(table_bisection)
+            print(f"Found root: x = {root_bisection:.3f}")
+            print(f"Check: f({root_bisection:.3f}) = {cubic_function(root_bisection):.3f}")
+        else:
+            print(table_bisection)
+
+        print(f"\nCombined method")
+        root_combined, table_combined = combined_method(
+            cubic_function,
+            first_derivative,
+            left_bound,
+            right_bound,
+            epsilon=1e-5
+        )
+        print(table_combined)
+        print(f"Found root: x = {root_combined:.3f}")
+        print(f"Check: f({root_combined:.3f}) = {cubic_function(root_combined):.3f}")
+
+    print(f"\nNumpy Solution")
+    coefficients = [-1.38, -5.42, 2.57, 10.95]
+    roots_numpy = np.roots(coefficients)
+    real_roots = roots_numpy[np.isreal(roots_numpy)].real
+
+    for i, root in enumerate(real_roots):
+        if -5 <= root <= 3:
+            print(f"Root {i+1}: x = {root:.3f}")
+            print(f"Check: f({root:.3f}) = {cubic_function(root):.3f}")
+
+    print("Function analysis")
+    print("System of equations:")
+    print("f1(x,y) = sin(x) + 2y - 2 = 0")
+    print("f2(x,y) = 2x + cos(y-1) - 0.7 = 0")
+
+    x_range = np.linspace(-2, 2, 100)
+    y_range = np.linspace(-2, 2, 100)
+    X_grid, Y_grid = np.meshgrid(x_range, y_range)
+
+    z1_values = first_system_equation(X_grid, Y_grid)
+    z2_values = second_system_equation(X_grid, Y_grid)
+
+    plt.figure(figsize=(10, 8))
+    contour1 = plt.contour(
+        X_grid, 
+        Y_grid, 
+        z1_values, 
+        levels=[0], 
+        colors='red', 
+        linewidths=2
+    )
+    contour2 = plt.contour(
+        X_grid, 
+        Y_grid, 
+        z2_values, 
+        levels=[0], 
+        colors='blue', 
+        linewidths=2
+    )
+    plt.grid(True, alpha=0.3)
+    plt.show()
+
+    x_initial, y_initial = 0.5, 0.8
+    print("\nJacobian matrix")
+    jacobian = jacobian_matrix(x_initial, y_initial)
+    print("J(x,y) =")
+    print(f"\nAt initial point (x0,y0) = ({x_initial},{y_initial}):")
+    print(f"J({x_initial},{y_initial}) =")
+    print(f"[ {jacobian[0, 0]:.6f}  {jacobian[0, 1]:.6f} ]")
+    print(f"[ {jacobian[1, 0]:.6f}  {jacobian[1, 1]:.6f} ]")
+
+    print("\nLinear system")
+    print("System to solve for delta_x, delta_y:")
+    print(f"[ {jacobian[0, 0]:.6f}  {jacobian[0, 1]:.6f} ] "
+          f"[delta_x] = [{-first_system_equation(x_initial, y_initial):.6f}]")
+    print(f"[ {jacobian[1, 0]:.6f}  {jacobian[1, 1]:.6f} ] "
+          f"[delta_y] = [{-second_system_equation(x_initial, y_initial):.6f}]")
+
+    print("\nNewton's method solution")
+    solution, table, iterations = newton_system_solver(
+        first_system_equation,
+        second_system_equation,
+        jacobian_matrix,
+        x_initial,
+        y_initial
+    )
+    print(table)
+
+
+if __name__ == "__main__":
+    main()
