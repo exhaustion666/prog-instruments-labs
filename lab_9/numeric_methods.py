@@ -213,43 +213,43 @@ class NumericalMethods:
         return intervals
 
 
-def cubic_function(x_value):
-    """
-    Cubic function: f(x) = -1.38x³ - 5.42x² + 2.57x + 10.95.
-    
-    :params:
-        x_value: float - Input value
+    def cubic_function(self, x_value):
+        """
+        Cubic function: f(x) = -1.38x³ - 5.42x² + 2.57x + 10.95.
         
-    :returns:
-        float - Function value at x
-    """
-    return -1.38 * x_value**3 - 5.42 * x_value**2 + 2.57 * x_value + 10.95
+        :params:
+            x_value: float - Input value
+            
+        :returns:
+            float - Function value at x
+        """
+        return -1.38 * x_value**3 - 5.42 * x_value**2 + 2.57 * x_value + 10.95
 
 
-def first_derivative(x_value):
-    """
-    First derivative of the cubic function.
-    
-    :params:
-        x_value: float - Input value
+    def first_derivative(self, x_value):
+        """
+        First derivative of the cubic function.
         
-    :returns:
-        float - Derivative value at x
-    """
-    return -4.14 * x_value**2 - 10.84 * x_value + 2.57
+        :params:
+            x_value: float - Input value
+            
+        :returns:
+            float - Derivative value at x
+        """
+        return -4.14 * x_value**2 - 10.84 * x_value + 2.57
 
 
-def second_derivative(x_value):
-    """
-    Second derivative of the cubic function.
-    
-    :params:
-        x_value: float - Input value
+    def second_derivative(self, x_value):
+        """
+        Second derivative of the cubic function.
         
-    :returns:
-        float - Second derivative value at x
-    """
-    return -8.28 * x_value - 10.84
+        :params:
+            x_value: float - Input value
+            
+        :returns:
+            float - Second derivative value at x
+        """
+        return -8.28 * x_value - 10.84
 
 
 def bisection_method(
@@ -302,60 +302,101 @@ def bisection_method(
     return x, table
 
 
-def combined_method(
-        function, 
-        derivative_function, 
-        left_boundary, 
-        right_boundary, 
-        epsilon=1e-5, 
-        max_iterations=100):
-    """
-    Find root using combined chord and tangent method.
-    
-    :params:
-        function: callable - Function to find root of
-        derivative_function: callable - Derivative of the function
-        left_boundary: float - Left interval boundary
-        right_boundary: float - Right interval boundary
-        epsilon: float, - Convergence tolerance (default: 1e-5)
-        max_iterations: int - Maximum number of iterations (default: 100)
+    def bisection_method(self, function, left_boundary, right_boundary, 
+                        epsilon=1e-3, max_iterations=100):
+        """
+        Find root of function using bisection method.
         
-    :returns:
-        tuple - (root, table) where root is the found root,
-                and table is the iteration history
-    """
-    table = PrettyTable()
-    table.field_names = [
-        "Iteration", 
-        "x_chord", 
-        "x_tangent", 
-        "f(x_chord)", 
-        "f(x_tangent)", 
-        "|diff|"
-    ]
-    x_chord, x_tangent = left_boundary, right_boundary
+        :params:
+            function: callable - Function to find root of
+            left_boundary: float - Left interval boundary
+            right_boundary: float - Right interval boundary
+            epsilon: float - Convergence tolerance (default: 1e-3)
+            max_iterations: int - Maximum number of iterations (default: 100)
+            
+        :returns:
+            tuple - (root, table) where root is the found root or None,
+                    and table is the iteration history
+        """
+        table = PrettyTable()
+        table.field_names = ["Iteration", "a", "b", "x", "f(a)", "f(b)", 
+                           "f(x)", "|b-a|"]
+        
+        if function(left_boundary)*function(right_boundary) > 0:
+            return None, "Function has same signs at interval endpoints"
 
-    for i in range(max_iterations):
-        x_chord_new = (x_chord 
-                       - function(x_chord) 
-                       * (right_boundary - x_chord) 
-                       / (function(right_boundary)
-                       - function(x_chord)))
-        x_tangent_new = x_tangent - function(x_tangent)/derivative_function(x_tangent)
-        diff = abs(x_tangent_new - x_chord_new)
-        table.add_row([
-            i+1,
-            f"{x_chord_new:.3f}",
-            f"{x_tangent_new:.3f}",
-            f"{function(x_chord_new):.3f}",
-            f"{function(x_tangent_new):.3f}",
-            f"{diff:.3f}"
-        ])
-        if diff < epsilon:
-            return (x_chord_new+x_tangent_new) / 2, table
-        x_chord, x_tangent = x_chord_new, x_tangent_new
+        for i in range(max_iterations):
+            x = (left_boundary + right_boundary) / 2
+            f_a = function(left_boundary)
+            f_b = function(right_boundary)
+            f_x = function(x)
+            table.add_row([
+                i+1,
+                f"{left_boundary:.6f}",
+                f"{right_boundary:.6f}",
+                f"{x:.6f}",
+                f"{f_a:.6f}",
+                f"{f_b:.6f}",
+                f"{f_x:.6f}",
+                f"{abs(right_boundary - left_boundary):.6f}"
+            ])
+            if abs(right_boundary-left_boundary) < epsilon:
+                return x, table
+            if function(left_boundary)*function(x) < 0:
+                right_boundary = x
+            else:
+                left_boundary = x
 
-    return (x_chord+x_tangent) / 2, table
+        return x, table
+
+
+    def combined_method(self, function, derivative_function, left_boundary, 
+                       right_boundary, epsilon=1e-5, max_iterations=100):
+        """
+        Find root using combined chord and tangent method.
+        
+        :params:
+            function: callable - Function to find root of
+            derivative_function: callable - Derivative of the function
+            left_boundary: float - Left interval boundary
+            right_boundary: float - Right interval boundary
+            epsilon: float, - Convergence tolerance (default: 1e-5)
+            max_iterations: int - Maximum number of iterations (default: 100)
+            
+        :returns:
+            tuple - (root, table) where root is the found root,
+                    and table is the iteration history
+        """
+        table = PrettyTable()
+        table.field_names = [
+            "Iteration", 
+            "x_chord", 
+            "x_tangent", 
+            "f(x_chord)", 
+            "f(x_tangent)", 
+            "|diff|"
+        ]
+        x_chord, x_tangent = left_boundary, right_boundary
+
+        for i in range(max_iterations):
+            x_chord_new = (x_chord - function(x_chord) 
+                          * (right_boundary - x_chord) 
+                          / (function(right_boundary) - function(x_chord)))
+            x_tangent_new = x_tangent - function(x_tangent)/derivative_function(x_tangent)
+            diff = abs(x_tangent_new - x_chord_new)
+            table.add_row([
+                i+1,
+                f"{x_chord_new:.3f}",
+                f"{x_tangent_new:.3f}",
+                f"{function(x_chord_new):.3f}",
+                f"{function(x_tangent_new):.3f}",
+                f"{diff:.3f}"
+            ])
+            if diff < epsilon:
+                return (x_chord_new+x_tangent_new) / 2, table
+            x_chord, x_tangent = x_chord_new, x_tangent_new
+
+        return (x_chord+x_tangent) / 2, table
 
 
 def first_system_equation(x_value, y_value):
