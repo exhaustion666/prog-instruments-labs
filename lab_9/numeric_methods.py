@@ -585,6 +585,33 @@ def bisection_method(
         plt.title('System of Equations')
         plt.show()
 
+    def run_all_methods(self):
+        """Run all numerical methods."""
+        print("Numerical Methods Laboratory Work")
+        print(f"Environment: {self.config.env}")
+        
+        print("\n1. QR Decomposition:")
+        self.run_qr_decomposition()
+        
+        print("\n2. Linear System Solution (QR):")
+        self.solve_linear_system_qr()
+        
+        print("\n3. Seidel Method:")
+        self.solve_seidel()
+        
+        print("\n4. Nonlinear Equation Solving:")
+        self.solve_nonlinear_equation()
+        
+        print("\n5. Nonlinear System Solving:")
+        self.solve_nonlinear_system()
+        
+        if self.config.should_show_output("plot"):
+            print("\n6. Plotting Functions:")
+            self.plot_function()
+            self.plot_system()
+        
+        print("\nAll methods completed successfully.")
+
 
 def main():
     """Main function for calculations."""
@@ -638,4 +665,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
