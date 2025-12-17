@@ -399,315 +399,243 @@ def bisection_method(
         return (x_chord+x_tangent) / 2, table
 
 
-def first_system_equation(x_value, y_value):
-    """
-    First equation of the system: sin(x) + 2y - 2 = 0.
+    def solve_nonlinear_system(self):
+        """Solve nonlinear system using Newton's method."""
+        print("System of equations:")
+        print("  f1(x,y) = sin(x) + 2y - 2 = 0")
+        print("  f2(x,y) = 2x + cos(y-1) - 0.7 = 0")
+        
+        x_initial, y_initial = 0.5, 0.8
+        print(f"\nInitial guess: x0 = {x_initial}, y0 = {y_initial}")
+        
+        solution, table, iterations = self.newton_system_solver(
+            self.first_system_equation,
+            self.second_system_equation,
+            self.jacobian_matrix,
+            x_initial,
+            y_initial
+        )
+        
+        print(table)
+        
+        if solution:
+            print(f"\nSolution: x = {solution[0]:.6f}, y = {solution[1]:.6f}")
+        
+        return solution
+
+
+    def first_system_equation(self, x_value, y_value):
+        """
+        First equation of the system: sin(x) + 2y - 2 = 0.
+        
+        :params:
+            x_value: float - x coordinate
+            y_value: float - y coordinate
+            
+        :returns:
+            float - Function value
+        """
+        return np.sin(x_value) + 2*y_value - 2
+
+
+    def second_system_equation(self, x_value, y_value):
+        """
+        Second equation of the system: 2x + cos(y-1) - 0.7 = 0.
+        
+        :params:
+            x_value: float - x coordinate
+            y_value: float - y coordinate
+            
+        :returns:
+            float - Function value
+        """
+        return 2*x_value + np.cos(y_value - 1) - 0.7
+
+
+    def jacobian_matrix(self, x_value, y_value):
+        """
+        Compute Jacobian matrix for the system of equations.
+        
+        :params:
+            x_value: float - x coordinate
+            y_value: float - y coordinate
+            
+        :returns:
+            numpy.ndarray - 2x2 Jacobian matrix
+        """
+        df1_dx = np.cos(x_value)
+        df1_dy = 2
+        df2_dx = 2
+        df2_dy = -np.sin(y_value - 1)
+
+        return np.array([[df1_dx, df1_dy], [df2_dx, df2_dy]])
+
+
+    def newton_system_solver(self, equation1, equation2, jacobian_func, 
+                            x_initial, y_initial, epsilon=1e-4, 
+                            max_iterations=100):
+        """
+        Solve system of equations using Newton's method.
+        
+        :params:
+            equation1: callable - First equation f1(x,y)
+            equation2: callable - Second equation f2(x,y)
+            jacobian_func: callable - Function to compute Jacobian matrix
+            x_initial: float - Initial x guess
+            y_initial: float - Initial y guess
+            epsilon: float - Convergence tolerance (default: 1e-4)
+            max_iterations: int - Maximum number of iterations (default: 100)
+            
+        :returns:
+            tuple - (solution, table, iterations) where solution is (x,y) or None,
+                    table is iteration history, iterations is number of iterations
+        """
+        table = PrettyTable()
+        table.field_names = ["Iteration", "x", "y", "f1(x,y)", "f2(x,y)", "||delta||"]
+        x_current, y_current = x_initial, y_initial
+
+        for i in range(max_iterations):
+            f_vector = np.array([
+                equation1(x_current, y_current), 
+                equation2(x_current, y_current)
+            ])
+            jacobian = jacobian_func(x_current, y_current)
+            determinant_jacobian = np.linalg.det(jacobian)
+            
+            if abs(determinant_jacobian) < 1e-12:
+                return None, table, "Jacobian is singular"
+            
+            jacobian_dx = np.array([
+                [f_vector[0], jacobian[0, 1]], 
+                [f_vector[1], jacobian[1, 1]]
+            ])
+            jacobian_dy = np.array([
+                [jacobian[0, 0], f_vector[0]], 
+                [jacobian[1, 0], f_vector[1]]
+            ])
+
+            delta_x = np.linalg.det(jacobian_dx) / determinant_jacobian
+            delta_y = np.linalg.det(jacobian_dy) / determinant_jacobian
+            
+            x_new = x_current - delta_x
+            y_new = y_current - delta_y
+            delta_norm = np.sqrt(delta_x**2 + delta_y**2)
+            
+            table.add_row([
+                i+1,
+                f"{x_new:.8f}",
+                f"{y_new:.8f}",
+                f"{equation1(x_new, y_new):.8f}",
+                f"{equation2(x_new, y_new):.8f}",
+                f"{delta_norm:.8f}"
+            ])
+
+            if delta_norm < epsilon:
+                return (x_new, y_new), table, i+1
+            
+            x_current, y_current = x_new, y_new
+
+        return (x_current, y_current), table, max_iterations
     
-    :params:
-        x_value: float - x coordinate
-        y_value: float - y coordinate
-        
-    :returns:
-        float - Function value
-    """
-    return np.sin(x_value) + 2*y_value - 2
+
+    def plot_function(self):
+        """Plot cubic function."""
+        x_values = np.linspace(-5, 3, 1000)
+        y_values = self.cubic_function(x_values)
+
+        plt.figure(figsize=(12, 8))
+        plt.plot(x_values, y_values, 'b-', linewidth=2)
+        plt.axhline(y=0, color='k', linestyle='--', alpha=0.3)
+        plt.grid(True, alpha=0.3)
+        plt.xlabel('x')
+        plt.ylabel('f(x)')
+        plt.title('Cubic Function: f(x) = -1.38x³ -5.42x² +2.57x +10.95')
+        plt.show()
 
 
-def second_system_equation(x_value, y_value):
-    """
-    Second equation of the system: 2x + cos(y-1) - 0.7 = 0.
-    
-    :params:
-        x_value: float - x coordinate
-        y_value: float - y coordinate
-        
-    :returns:
-        float - Function value
-    """
-    return 2*x_value + np.cos(y_value - 1) - 0.7
+    def plot_system(self):
+        """Plot system of equations."""
+        x_range = np.linspace(-2, 2, 100)
+        y_range = np.linspace(-2, 2, 100)
+        X_grid, Y_grid = np.meshgrid(x_range, y_range)
 
+        z1_values = self.first_system_equation(X_grid, Y_grid)
+        z2_values = self.second_system_equation(X_grid, Y_grid)
 
-def jacobian_matrix(x_value, y_value):
-    """
-    Compute Jacobian matrix for the system of equations.
-    
-    :params:
-        x_value: float - x coordinate
-        y_value: float - y coordinate
-        
-    :returns:
-        numpy.ndarray - 2x2 Jacobian matrix
-    """
-    df1_dx = np.cos(x_value)
-    df1_dy = 2
-    df2_dx = 2
-    df2_dy = -np.sin(y_value - 1)
-
-    return np.array([[df1_dx, df1_dy], [df2_dx, df2_dy]])
-
-
-def newton_system_solver(
-        equation1, equation2, jacobian_func, x_initial, 
-        y_initial, epsilon=1e-4, max_iterations=100):
-    """
-    Solve system of equations using Newton's method.
-    
-    :params:
-        equation1: callable - First equation f1(x,y)
-        equation2: callable - Second equation f2(x,y)
-        jacobian_func: callable - Function to compute Jacobian matrix
-        x_initial: float - Initial x guess
-        y_initial: float - Initial y guess
-        epsilon: float - Convergence tolerance (default: 1e-4)
-        max_iterations: int - Maximum number of iterations (default: 100)
-        
-    :returns:
-        tuple - (solution, table, iterations) where solution is (x,y) or None,
-                table is iteration history, iterations is number of iterations
-    """
-    table = PrettyTable()
-    table.field_names = ["Iteration", "x", "y", "f1(x,y)", "f2(x,y)", "||delta||"]
-    x_current, y_current = x_initial, y_initial
-
-    for i in range(max_iterations):
-        f_vector = np.array([
-            equation1(x_current, y_current), 
-            equation2(x_current, y_current)
-        ])
-        jacobian = jacobian_func(x_current, y_current)
-        determinant_jacobian = np.linalg.det(jacobian)
-        
-        if abs(determinant_jacobian) < 1e-12:
-            return None, table, "Jacobian is singular"
-        
-        jacobian_dx = np.array([
-            [f_vector[0], jacobian[0, 1]], 
-            [f_vector[1], jacobian[1, 1]]
-        ])
-        jacobian_dy = np.array([
-            [jacobian[0, 0], f_vector[0]], 
-            [jacobian[1, 0], f_vector[1]]
-        ])
-
-        delta_x = np.linalg.det(jacobian_dx) / determinant_jacobian
-        delta_y = np.linalg.det(jacobian_dy) / determinant_jacobian
-        
-        x_new = x_current - delta_x
-        y_new = y_current - delta_y
-        delta_norm = np.sqrt(delta_x**2 + delta_y**2)
-        
-        table.add_row([
-            i+1,
-            f"{x_new:.8f}",
-            f"{y_new:.8f}",
-            f"{equation1(x_new, y_new):.8f}",
-            f"{equation2(x_new, y_new):.8f}",
-            f"{delta_norm:.8f}"
-        ])
-
-        if delta_norm < epsilon:
-            return (x_new, y_new), table, i+1
-        
-        x_current, y_current = x_new, y_new
-
-    return (x_current, y_current), table, max_iterations
+        plt.figure(figsize=(10, 8))
+        contour1 = plt.contour(
+            X_grid, 
+            Y_grid, 
+            z1_values, 
+            levels=[0], 
+            colors='red', 
+            linewidths=2
+        )
+        contour2 = plt.contour(
+            X_grid, 
+            Y_grid, 
+            z2_values, 
+            levels=[0], 
+            colors='blue', 
+            linewidths=2
+        )
+        plt.grid(True, alpha=0.3)
+        plt.xlabel('x')
+        plt.ylabel('y')
+        plt.title('System of Equations')
+        plt.show()
 
 
 def main():
-    """
-    Main function for calculations.
-
-    :params: None
-    
-    :returns: None
-    """
-    lab = NumericalMethods()
-    lab.run_qr_decomposition()
-
+    """Main function for calculations."""
     np.set_printoptions(precision=4, suppress=True)
-    q1_matrix, r1_matrix = gram_schmidt_qr(FIRST_MATRIX)
-    print("Matrix A: ", "\n", FIRST_MATRIX)
+    
+    lab = NumericalMethods()
+    
+    print("QR Decomposition:")
+    q1_matrix, r1_matrix = lab.gram_schmidt_qr(lab.config.get_test_matrix("A1"))
     print("Matrix Q: ", "\n", q1_matrix, "\n", "Matrix R: ", "\n", r1_matrix)
-    print("np.linalg: ", "\n", np.linalg.qr(FIRST_MATRIX))
-
-    q2_matrix, r2_matrix = gram_schmidt_qr(SECOND_MATRIX)
-    print("\nMatrix Q:")
-    print(q2_matrix)
-    print("\nMatrix R:")
-    print(r2_matrix)
-    qr_matrix = solve_qr(SECOND_MATRIX, FIRST_SOLUTION)
-    print(f"\nSystem solution (QR method): x = {qr_matrix}")
-    np_solution = np.linalg.solve(SECOND_MATRIX, FIRST_SOLUTION)
-    print(f"Numpy solution: x = {np_solution}")
-
-    if not check_diagonal_dominance(THIRD_MATRIX):
-        coefficient_matrix = np.array([
-            [7.5, 3.8, 4.8],
-            [1.9, 4.1, 2.1],
-            [3.1, 2.8, 4.9]
-        ])
-        right_side_vector = np.array([5.6, 2.1, 0.2])
-    else:
-        coefficient_matrix = THIRD_MATRIX
-        right_side_vector = SECOND_SOLUTION
-
-    print("\nZeidel Solution: ")
-    solution = seidel_method(coefficient_matrix, right_side_vector)
-    print(f"\nSolution: ")
-
-    for i, val in enumerate(solution):
-        print(f"x{i+1} = {val:.6f}")
-
-    print("Linalg solve: ", np.linalg.solve(THIRD_MATRIX, SECOND_SOLUTION))
-
-    x_values = np.linspace(-5, 3, 1000)
-    y_values = cubic_function(x_values)
-
-    plt.figure(figsize=(12, 8))
-    plt.plot(x_values, y_values, 'b-', linewidth=2)
-    plt.axhline(y=0, color='k', linestyle='--', alpha=0.3)
-    plt.grid(True, alpha=0.3)
-    plt.xlabel('x')
-    plt.ylabel('f(x)')
-    plt.show()
-
-    print("\nInterval Analysis")
-    analysis_table = PrettyTable()
-    analysis_table.field_names = ["x", "f(x)", "f'(x)", "f''(x)", "Sign f(x)"]
-    for point in test_points:
-        f_x = cubic_function(point)
-        f_prime_x = first_derivative(point)
-        f_double_prime_x = second_derivative(point)
-        sign = "+" if f_x > 0 else "-" if f_x < 0 else "0"
-        analysis_table.add_row([
-            point, 
-            f"{f_x:.3f}", 
-            f"{f_prime_x:.3f}", 
-            f"{f_double_prime_x:.3f}", 
-            sign
-        ])
-
-    print(analysis_table)
-    print("\nRoot intervals")
-    intervals = []
-
-    for i in range(len(test_points)-1):
-        if cubic_function(test_points[i]) * cubic_function(test_points[i+1]) <= 0:
-            intervals.append((test_points[i], test_points[i+1]))
-            print(f"Root in interval [{test_points[i]}, {test_points[i+1]}]")
-            print(f"f({test_points[i]}) = {cubic_function(test_points[i]):.3f},"
-                  f"f({test_points[i+1]}) = {cubic_function(test_points[i+1]):.3f}")
-
-    for i, (left_bound, right_bound) in enumerate(intervals):
-        print(f"\nSolution for root in interval [{left_bound}, {right_bound}]")
-        print("\nConvergence conditions check:")
-        print(f"f({left_bound}) = {cubic_function(left_bound):.3f}")
-        print(f"f({right_bound}) = {cubic_function(right_bound):.3f}")
-        print(f"f({left_bound}) \
-              * f({right_bound}) \
-              = {cubic_function(left_bound) \
-              * cubic_function(right_bound):.3f}"
-        )
-
-        if cubic_function(left_bound)*cubic_function(right_bound) < 0:
-            print("Condition f(a)*f(b) < 0 is satisfied")
-        else:
-            print("Condition f(a)*f(b) < 0 is not satisfied")
-
-        print(f"\nBisection method")
-        root_bisection, table_bisection = bisection_method(
-            cubic_function, 
-            left_bound, 
-            right_bound, 
-            epsilon=1e-3
+    
+    print("\nLinear System Solution (QR):")
+    solution = lab.solve_linear_system_qr()
+    
+    print("\nSeidel Method:")
+    seidel_solution = lab.solve_seidel()
+    
+    print("\nNonlinear Equation Solving:")
+    intervals = lab.solve_nonlinear_equation()
+    
+    for left_bound, right_bound in intervals:
+        print(f"\nSolving for root in [{left_bound}, {right_bound}]")
+        
+        root_bisection, table_bisection = lab.bisection_method(
+            lab.cubic_function, left_bound, right_bound, epsilon=1e-3
         )
         
         if root_bisection is not None:
+            print("\nBisection Method:")
             print(table_bisection)
             print(f"Found root: x = {root_bisection:.3f}")
-            print(f"Check: f({root_bisection:.3f}) = {cubic_function(root_bisection):.3f}")
-        else:
-            print(table_bisection)
-
-        print(f"\nCombined method")
-        root_combined, table_combined = combined_method(
-            cubic_function,
-            first_derivative,
+        
+        root_combined, table_combined = lab.combined_method(
+            lab.cubic_function,
+            lab.first_derivative,
             left_bound,
             right_bound,
             epsilon=1e-5
         )
+        print("\nCombined Method:")
         print(table_combined)
         print(f"Found root: x = {root_combined:.3f}")
-        print(f"Check: f({root_combined:.3f}) = {cubic_function(root_combined):.3f}")
-
-    print(f"\nNumpy Solution")
-    roots_numpy = np.roots(coefficients)
-    real_roots = roots_numpy[np.isreal(roots_numpy)].real
-
-    for i, root in enumerate(real_roots):
-        if -5 <= root <= 3:
-            print(f"Root {i+1}: x = {root:.3f}")
-            print(f"Check: f({root:.3f}) = {cubic_function(root):.3f}")
-
-    print("Function analysis")
-    print("System of equations:")
-    print("f1(x,y) = sin(x) + 2y - 2 = 0")
-    print("f2(x,y) = 2x + cos(y-1) - 0.7 = 0")
-
-    x_range = np.linspace(-2, 2, 100)
-    y_range = np.linspace(-2, 2, 100)
-    X_grid, Y_grid = np.meshgrid(x_range, y_range)
-
-    z1_values = first_system_equation(X_grid, Y_grid)
-    z2_values = second_system_equation(X_grid, Y_grid)
-
-    plt.figure(figsize=(10, 8))
-    contour1 = plt.contour(
-        X_grid, 
-        Y_grid, 
-        z1_values, 
-        levels=[0], 
-        colors='red', 
-        linewidths=2
-    )
-    contour2 = plt.contour(
-        X_grid, 
-        Y_grid, 
-        z2_values, 
-        levels=[0], 
-        colors='blue', 
-        linewidths=2
-    )
-    plt.grid(True, alpha=0.3)
-    plt.show()
-
-    x_initial, y_initial = 0.5, 0.8
-    print("\nJacobian matrix")
-    jacobian = jacobian_matrix(x_initial, y_initial)
-    print("J(x,y) =")
-    print(f"\nAt initial point (x0,y0) = ({x_initial},{y_initial}):")
-    print(f"J({x_initial},{y_initial}) =")
-    print(f"[ {jacobian[0, 0]:.6f}  {jacobian[0, 1]:.6f} ]")
-    print(f"[ {jacobian[1, 0]:.6f}  {jacobian[1, 1]:.6f} ]")
-
-    print("\nLinear system")
-    print("System to solve for delta_x, delta_y:")
-    print(f"[ {jacobian[0, 0]:.6f}  {jacobian[0, 1]:.6f} ] "
-          f"[delta_x] = [{-first_system_equation(x_initial, y_initial):.6f}]")
-    print(f"[ {jacobian[1, 0]:.6f}  {jacobian[1, 1]:.6f} ] "
-          f"[delta_y] = [{-second_system_equation(x_initial, y_initial):.6f}]")
-
-    print("\nNewton's method solution")
-    solution, table, iterations = newton_system_solver(
-        first_system_equation,
-        second_system_equation,
-        jacobian_matrix,
-        x_initial,
-        y_initial
-    )
-    print(table)
+    
+    print("\nNonlinear System Solving:")
+    system_solution = lab.solve_nonlinear_system()
+    
+    if lab.config.should_show_output("plot"):
+        lab.plot_function()
+        lab.plot_system()
 
 
 if __name__ == "__main__":
     main()
+    
