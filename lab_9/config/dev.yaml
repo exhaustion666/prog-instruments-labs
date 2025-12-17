@@ -1,0 +1,27 @@
+debug: true
+log_level: "DEBUG"
+
+output:
+  show_tables: true
+  show_plots: true
+  save_results: true
+  results_dir: "./results/dev"
+
+matrix:
+  test_matrices:
+    A1:
+      type: "random"
+      size: [3, 3]
+    A_qr:
+      type: "fixed"
+      value: [[8.2, 3.2, 14.2, 14.8],
+              [5.6, 12, 15, 6.4],
+              [5.7, 3.6, 12.4, 2.3],
+              [6.8, 13.2, 6.3, 8.7]]
+    b_qr:
+      type: "fixed"
+      value: [8.4, 4.5, 3.3, 14.3]
+
+validation:
+  compare_with_numpy: true
+  tolerance: 1e-6

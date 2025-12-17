@@ -1,0 +1,16 @@
+project:
+  name: "Numerical Methods"
+
+debug: false
+log_level: "INFO"
+
+output:
+  precision: 6
+  show_tables: true
+  show_plots: true
+  save_results: false
+
+matrix:
+  random_range_min: -8
+  random_range_max: 8
+  default_size: 3

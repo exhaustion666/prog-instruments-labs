@@ -6,22 +6,6 @@ from prettytable import PrettyTable
 from scipy.optimize import fsolve
 
 
-FIRST_MATRIX = np.random.randint(-8, 9, (3, 3))
-SECOND_MATRIX = np.array([
-    [8.2, 3.2, 14.2, 14.8],
-    [5.6, 12, 15, 6.4],
-    [5.7, 3.6, 12.4, 2.3],
-    [6.8, 13.2, 6.3, 8.7]
-])
-FIRST_SOLUTION = np.array([8.4, 4.5, 3.3, 14.3])
-THIRD_MATRIX = np.array([
-    [3.1, 2.8, 4.9],
-    [1.9, 4.1, 2.1],
-    [7.5, 3.8, 4.8]
-])
-SECOND_SOLUTION = np.array([0.2, 2.1, 5.6])
-
-
 def gram_schmidt_qr(matrix):
     """
     Perform QR decomposition using Gram-Schmidt orthogonalization process.
@@ -516,9 +500,6 @@ def main():
     print("\nInterval Analysis")
     analysis_table = PrettyTable()
     analysis_table.field_names = ["x", "f(x)", "f'(x)", "f''(x)", "Sign f(x)"]
-
-    test_points = [-5, -4, -3, -2, -1, 0, 1, 2, 3]
-
     for point in test_points:
         f_x = cubic_function(point)
         f_prime_x = first_derivative(point)
@@ -587,7 +568,6 @@ def main():
         print(f"Check: f({root_combined:.3f}) = {cubic_function(root_combined):.3f}")
 
     print(f"\nNumpy Solution")
-    coefficients = [-1.38, -5.42, 2.57, 10.95]
     roots_numpy = np.roots(coefficients)
     real_roots = roots_numpy[np.isreal(roots_numpy)].real
 
