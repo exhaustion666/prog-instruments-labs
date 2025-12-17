@@ -4,183 +4,213 @@ import numpy as np
 import scipy as sp
 from prettytable import PrettyTable
 from scipy.optimize import fsolve
+from config_manager import get_config
 
 
-def gram_schmidt_qr(matrix):
-    """
-    Perform QR decomposition using Gram-Schmidt orthogonalization process.
-
-    :params: 
-        matrix: numpy.ndarray - Input matrix to decompose
+class NumericalMethods:
+    def __init__(self, config=None):
+        """
+        Initialize numerical methods.
         
-    :returns:
-        q_matrix: numpy.ndarray - Orthogonal matrix Q
-        r_matrix: numpy.ndarray - Upper triangular matrix R
-    """
-    num_columns = matrix.shape[1]
-    num_rows = matrix.shape[0]
-    q_matrix = np.zeros((num_rows, num_columns), dtype=float)
-    count = 0
+        :params:
+            config: NumericalMethodsConfig - Configuration object
+        """
+        self.config = config or get_config()
+        self.results = {}
+        np.set_printoptions(precision=4, suppress=True)
 
-    for column in matrix.T:
-        vector_u = np.copy(column)
-        for i in range(0, count):
-            vector_u = vector_u - np.dot(np.dot(q_matrix[:, i], column), q_matrix[:, i])
-        vector_e = vector_u / np.linalg.norm(vector_u)
-        q_matrix[:, count] = vector_e
-        count += 1
-
-    r_matrix = np.dot(q_matrix.T, matrix)
-
-    return q_matrix, r_matrix
-
-
-def gram_schmidt_partial(matrix):
-    """
-    Perform partial QR decomposition using 
-    Gram-Schmidt for matrices with 2 columns.
-    
-    :params: 
-        matrix: numpy.ndarray - Input matrix with at least 2 columns
+    def run_qr_decomposition(self):
+        """Perform QR decomposition using Gram-Schmidt method."""
+        matrix_a = self.config.get_test_matrix("A1")
         
-    :returns:
-        q_matrix: numpy.ndarray - Orthogonal matrix Q (partial)
-        r_matrix: numpy.ndarray - Upper triangular matrix R (partial)
-    """
-    matrix = np.array(matrix, dtype=float)
-    num_rows, num_columns = matrix.shape
-    q_matrix = np.zeros((num_rows, 2))
-    r_matrix = np.zeros((2, num_columns))
-    vector_v1 = matrix[:, 0].copy()
-    r_matrix[0, 0] = np.linalg.norm(vector_v1)
-
-    if r_matrix[0, 0] > 1e-10:
-        q_matrix[:, 0] = vector_v1 / r_matrix[0, 0]
-    else:
-        q_matrix[:, 0] = vector_v1
-
-    if q_matrix[0, 0] < 0:
-        q_matrix[:, 0] = -q_matrix[:, 0]
-        r_matrix[0, 0] = -r_matrix[0, 0]
-    
-    vector_v2 = matrix[:, 1].copy()
-    r_matrix[0, 1] = np.dot(q_matrix[:, 0], matrix[:, 1])
-    vector_v2 -= r_matrix[0, 1] * q_matrix[:, 0]
-    r_matrix[1, 1] = np.linalg.norm(vector_v2)
-
-    if r_matrix[1, 1] > 1e-10:
-        q_matrix[:, 1] = vector_v2 / r_matrix[1, 1]
-    else:
-        q_matrix[:, 1] = vector_v2
-
-    if q_matrix[0, 1] < 0:
-        q_matrix[:, 1] = -q_matrix[:, 1]
-        r_matrix[0, 1] = -r_matrix[0, 1]
-        r_matrix[1, 1] = -r_matrix[1, 1]
-
-    for j in range(2, num_columns):
-        r_matrix[0, j] = np.dot(q_matrix[:, 0], matrix[:, j])
-        r_matrix[1, j] = np.dot(q_matrix[:, 1], matrix[:, j])
-    
-    q_matrix = -q_matrix
-    r_matrix = -r_matrix
-
-    return q_matrix, r_matrix
-
-
-def solve_qr(coefficient_matrix, right_side_vector):
-    """
-    Solve linear system Ax = b using QR decomposition.
-    
-    :params:
-        coefficient_matrix: numpy.ndarray - Coefficient matrix
-        right_side_vector: numpy.ndarray - Right-hand side vector
+        print("Matrix A:")
+        print(matrix_a)
         
-    :returns:
-        solution: numpy.ndarray - Solution vector
-    """
-    q_matrix, r_matrix = gram_schmidt_qr(coefficient_matrix)
-    b_hat = np.dot(q_matrix.T, right_side_vector)
-    n = len(b_hat)
-    solution = np.zeros(n)
-
-    for i in range(n-1, -1, -1):
-        solution[i] = b_hat[i]
-        for j in range(i+1, n):
-            solution[i] -= r_matrix[i, j] * solution[j]
-        solution[i] /= r_matrix[i, i]
-
-    return solution
-
-
-def check_diagonal_dominance(matrix):
-    """
-    Check if a matrix is diagonally dominant.
-    
-    :params:
-        matrix: numpy.ndarray - Square matrix to check
+        q_matrix, r_matrix = self.gram_schmidt_qr(matrix_a)
         
-    :returns:
-        bool - True if matrix is diagonally dominant, False otherwise
-    """
-    n = len(matrix)
-
-    for i in range(n):
-        diagonal = abs(matrix[i][i])
-        row_sum = sum(abs(matrix[i][j]) for j in range(n) if j != i)
-        if diagonal <= row_sum:
-            return False
-
-    return True
-
-
-def seidel_method(
-        coefficient_matrix, 
-        right_side_vector, 
-        epsilon=1e-3, 
-        max_iterations=100):
-    """
-    Solve linear system using Gauss-Seidel method.
-    
-    :params:
-        coefficient_matrix: numpy.ndarray - Coefficient matrix
-        right_side_vector: numpy.ndarray - Right-hand side vector
-        epsilon: float - Convergence tolerance (default: 1e-3)
-        max_iterations: int - Maximum number of iterations (default: 100)
+        print("\nMatrix Q:")
+        print(q_matrix)
+        print("\nMatrix R:")
+        print(r_matrix)
         
-    :returns:
-        solution: numpy.ndarray - Solution vector
-    """
-    n = len(coefficient_matrix)
-    solution = np.zeros(n)
-    table = PrettyTable()
-    table.field_names = ["Iteration"] + [f"x{i+1}" for i in range(n)] + ["Epsilon"]
+        return q_matrix, r_matrix
 
-    for k in range(max_iterations):
-        new_solution = np.copy(solution)
-        max_error = 0
+    def gram_schmidt_qr(self, matrix):
+        """
+        Perform QR decomposition using Gram-Schmidt orthogonalization.
+        
+        :params:
+            matrix: numpy.ndarray - Input matrix to decompose
+            
+        :returns:
+            q_matrix: numpy.ndarray - Orthogonal matrix Q
+            r_matrix: numpy.ndarray - Upper triangular matrix R
+        """
+        num_columns = matrix.shape[1]
+        num_rows = matrix.shape[0]
+        q_matrix = np.zeros((num_rows, num_columns), dtype=float)
+        count = 0
+
+        for column in matrix.T:
+            vector_u = np.copy(column)
+            for i in range(0, count):
+                vector_u = vector_u - np.dot(np.dot(q_matrix[:, i], column), 
+                                           q_matrix[:, i])
+            vector_e = vector_u / np.linalg.norm(vector_u)
+            q_matrix[:, count] = vector_e
+            count += 1
+
+        r_matrix = np.dot(q_matrix.T, matrix)
+
+        return q_matrix, r_matrix
+
+
+    def solve_linear_system_qr(self):
+        """Solve linear system using QR decomposition."""
+        coefficient_matrix = self.config.get_test_matrix("A_qr")
+        right_side_vector = self.config.get_test_matrix("b_qr")
+        
+        print(f"Coefficient matrix: {coefficient_matrix.shape[0]}x{coefficient_matrix.shape[1]}")
+        print(coefficient_matrix)
+        print(f"\nRight-hand side vector: {right_side_vector}")
+        
+        solution = self.solve_qr(coefficient_matrix, right_side_vector)
+        
+        print(f"\nSolution (QR method): x = {solution}")
+        
+        return solution
+    
+
+    def solve_qr(self, coefficient_matrix, right_side_vector):
+        """
+        Solve linear system Ax = b using QR decomposition.
+        
+        :params:
+            coefficient_matrix: numpy.ndarray - Coefficient matrix
+            right_side_vector: numpy.ndarray - Right-hand side vector
+            
+        :returns:
+            solution: numpy.ndarray - Solution vector
+        """
+        q_matrix, r_matrix = self.gram_schmidt_qr(coefficient_matrix)
+        b_hat = np.dot(q_matrix.T, right_side_vector)
+        n = len(b_hat)
+        solution = np.zeros(n)
+
+        for i in range(n-1, -1, -1):
+            solution[i] = b_hat[i]
+            for j in range(i+1, n):
+                solution[i] -= r_matrix[i, j] * solution[j]
+            solution[i] /= r_matrix[i, i]
+
+        return solution
+
+
+    def solve_seidel(self):
+        """Solve linear system using Gauss-Seidel method."""
+        coefficient_matrix = np.array([
+            [3.1, 2.8, 4.9],
+            [1.9, 4.1, 2.1],
+            [7.5, 3.8, 4.8]
+        ])
+        right_side_vector = np.array([0.2, 2.1, 5.6])
+        
+        print("Matrix A:")
+        print(coefficient_matrix)
+        print(f"\nVector b: {right_side_vector}")
+        
+        solution = self.seidel_method(coefficient_matrix, right_side_vector)
+        
+        print(f"\nSolution: {solution}")
+        
+        return solution
+
+
+    def check_diagonal_dominance(self, matrix):
+        """
+        Check if a matrix is diagonally dominant.
+        
+        :params:
+            matrix: numpy.ndarray - Square matrix to check
+            
+        :returns:
+            bool - True if matrix is diagonally dominant, False otherwise
+        """
+        n = len(matrix)
+
         for i in range(n):
-            sum1 = sum(coefficient_matrix[i][j] * new_solution[j] for j in range(i))
-            sum2 = sum(coefficient_matrix[i][j] * solution[j] for j in range(i+1, n))
-            new_solution[i] = ((right_side_vector[i] 
-                                - sum1 
-                                - sum2) 
-                                / coefficient_matrix[i][i])
-            error = abs(new_solution[i]-solution[i])
-            if error > max_error:
-                max_error = error
-        iteration_number = k + 1
-        solution_strings = [f"{val:.6f}" for val in new_solution]
-        error_string = f"{max_error:.6f}"
-        table.add_row([iteration_number] + solution_strings + [error_string])
-        if max_error < epsilon:
-            print(table)
-            return new_solution
-        solution = new_solution
+            diagonal = abs(matrix[i][i])
+            row_sum = sum(abs(matrix[i][j]) for j in range(n) if j != i)
+            if diagonal <= row_sum:
+                return False
 
-    print(table)
+        return True
 
-    return solution
+
+    def seidel_method(self, coefficient_matrix, right_side_vector, 
+                                   epsilon=1e-3, max_iterations=100):
+        """
+        Solve linear system using Gauss-Seidel method.
+        
+        :params:
+            coefficient_matrix: numpy.ndarray - Coefficient matrix
+            right_side_vector: numpy.ndarray - Right-hand side vector
+            epsilon: float - Convergence tolerance (default: 1e-3)
+            max_iterations: int - Maximum number of iterations (default: 100)
+            
+        :returns:
+            solution: numpy.ndarray - Solution vector
+        """
+        n = len(coefficient_matrix)
+        solution = np.zeros(n)
+        table = PrettyTable()
+        table.field_names = ["Iteration"] + [f"x{i+1}" for i in range(n)] + ["Epsilon"]
+
+        for k in range(max_iterations):
+            new_solution = np.copy(solution)
+            max_error = 0
+            for i in range(n):
+                sum1 = sum(coefficient_matrix[i][j] * new_solution[j] 
+                          for j in range(i))
+                sum2 = sum(coefficient_matrix[i][j] * solution[j] 
+                          for j in range(i+1, n))
+                new_solution[i] = ((right_side_vector[i] - sum1 - sum2) 
+                                  / coefficient_matrix[i][i])
+                error = abs(new_solution[i]-solution[i])
+                if error > max_error:
+                    max_error = error
+            iteration_number = k + 1
+            solution_strings = [f"{val:.6f}" for val in new_solution]
+            error_string = f"{max_error:.6f}"
+            table.add_row([iteration_number] + solution_strings + [error_string])
+            if max_error < epsilon:
+                print(table)
+                return new_solution
+            solution = new_solution
+
+        print(table)
+
+        return solution
+    
+
+    def solve_nonlinear_equation(self):
+        """
+        Solve nonlinear equation using bisection and combined methods.
+        """
+        print("Function: f(x) = -1.38x³ - 5.42x² + 2.57x + 10.95")
+        
+        test_points = [-5, -4, -3, -2, -1, 0, 1, 2, 3]
+        
+        print("\nInterval analysis:")
+        intervals = []
+        
+        for i in range(len(test_points)-1):
+            if (self.cubic_function(test_points[i]) 
+                * self.cubic_function(test_points[i+1]) <= 0):
+                intervals.append((test_points[i], test_points[i+1]))
+                print(f"Root in interval [{test_points[i]}, {test_points[i+1]}]")
+        
+        return intervals
 
 
 def cubic_function(x_value):
@@ -450,6 +480,9 @@ def main():
     
     :returns: None
     """
+    lab = NumericalMethods()
+    lab.run_qr_decomposition()
+
     np.set_printoptions(precision=4, suppress=True)
     q1_matrix, r1_matrix = gram_schmidt_qr(FIRST_MATRIX)
     print("Matrix A: ", "\n", FIRST_MATRIX)
