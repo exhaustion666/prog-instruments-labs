@@ -20,7 +20,9 @@ class NumericalMethods:
         np.set_printoptions(precision=4, suppress=True)
 
     def run_qr_decomposition(self):
-        """Perform QR decomposition using Gram-Schmidt method."""
+        """
+        Perform QR decomposition using Gram-Schmidt method.
+        """
         matrix_a = self.config.get_test_matrix("A1")
         
         print("Matrix A:")
@@ -66,7 +68,9 @@ class NumericalMethods:
 
 
     def solve_linear_system_qr(self):
-        """Solve linear system using QR decomposition."""
+        """
+        Solve linear system using QR decomposition.
+        """
         coefficient_matrix = self.config.get_test_matrix("A_qr")
         right_side_vector = self.config.get_test_matrix("b_qr")
         
@@ -107,7 +111,9 @@ class NumericalMethods:
 
 
     def solve_seidel(self):
-        """Solve linear system using Gauss-Seidel method."""
+        """
+        Solve linear system using Gauss-Seidel method.
+        """
         coefficient_matrix = np.array([
             [3.1, 2.8, 4.9],
             [1.9, 4.1, 2.1],
@@ -400,7 +406,9 @@ def bisection_method(
 
 
     def solve_nonlinear_system(self):
-        """Solve nonlinear system using Newton's method."""
+        """
+        Solve nonlinear system using Newton's method.
+        """
         print("System of equations:")
         print("  f1(x,y) = sin(x) + 2y - 2 = 0")
         print("  f2(x,y) = 2x + cos(y-1) - 0.7 = 0")
@@ -539,7 +547,9 @@ def bisection_method(
     
 
     def plot_function(self):
-        """Plot cubic function."""
+        """
+        Plot cubic function.
+        """
         x_values = np.linspace(-5, 3, 1000)
         y_values = self.cubic_function(x_values)
 
@@ -554,7 +564,9 @@ def bisection_method(
 
 
     def plot_system(self):
-        """Plot system of equations."""
+        """
+        Plot system of equations.
+        """
         x_range = np.linspace(-2, 2, 100)
         y_range = np.linspace(-2, 2, 100)
         X_grid, Y_grid = np.meshgrid(x_range, y_range)
@@ -586,7 +598,9 @@ def bisection_method(
         plt.show()
 
     def run_all_methods(self):
-        """Run all numerical methods."""
+        """
+        Run all numerical methods.
+        """
         print("Numerical Methods Laboratory Work")
         print(f"Environment: {self.config.env}")
         
@@ -613,54 +627,62 @@ def bisection_method(
         print("\nAll methods completed successfully.")
 
 
+import argparse
+import sys
+
+
 def main():
-    """Main function for calculations."""
-    np.set_printoptions(precision=4, suppress=True)
+    """
+    Main function for numerical methods.
+    """
+    parser = argparse.ArgumentParser(
+        description="Numerical Methods Laboratory Work",
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     
-    lab = NumericalMethods()
+    parser.add_argument(
+        "--env",
+        choices=["dev", "prod"],
+        default=None,
+        help="Runtime environment (overrides NUM_METHODS_ENV)"
+    )
     
-    print("QR Decomposition:")
-    q1_matrix, r1_matrix = lab.gram_schmidt_qr(lab.config.get_test_matrix("A1"))
-    print("Matrix Q: ", "\n", q1_matrix, "\n", "Matrix R: ", "\n", r1_matrix)
+    parser.add_argument(
+        "--method",
+        choices=["qr", "seidel", "nonlinear", "system", "all"],
+        default="all",
+        help="Run specific method (default: all)"
+    )
     
-    print("\nLinear System Solution (QR):")
-    solution = lab.solve_linear_system_qr()
+    parser.add_argument(
+        "--config-dir",
+        default="config",
+        help="Path to configuration directory"
+    )
     
-    print("\nSeidel Method:")
-    seidel_solution = lab.solve_seidel()
+    args = parser.parse_args()
     
-    print("\nNonlinear Equation Solving:")
-    intervals = lab.solve_nonlinear_equation()
-    
-    for left_bound, right_bound in intervals:
-        print(f"\nSolving for root in [{left_bound}, {right_bound}]")
+    try:
+        config = get_config(env=args.env)
+        lab = NumericalMethods(config)
         
-        root_bisection, table_bisection = lab.bisection_method(
-            lab.cubic_function, left_bound, right_bound, epsilon=1e-3
-        )
-        
-        if root_bisection is not None:
-            print("\nBisection Method:")
-            print(table_bisection)
-            print(f"Found root: x = {root_bisection:.3f}")
-        
-        root_combined, table_combined = lab.combined_method(
-            lab.cubic_function,
-            lab.first_derivative,
-            left_bound,
-            right_bound,
-            epsilon=1e-5
-        )
-        print("\nCombined Method:")
-        print(table_combined)
-        print(f"Found root: x = {root_combined:.3f}")
+        match args.method:
+            case "all":
+                lab.run_all_methods()
+            case "qr":
+                lab.run_qr_decomposition()
+            case "seidel":
+                lab.solve_seidel()
+            case "nonlinear":
+                lab.solve_nonlinear_equation()
+            case "system":
+                lab.solve_nonlinear_system()
+            case _:
+                print(f"Unknown method: {args.method}")
     
-    print("\nNonlinear System Solving:")
-    system_solution = lab.solve_nonlinear_system()
-    
-    if lab.config.should_show_output("plot"):
-        lab.plot_function()
-        lab.plot_system()
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == "__main__":
