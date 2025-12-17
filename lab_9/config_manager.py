@@ -1,57 +1,79 @@
+import numpy as np
 import os
-import yaml
-from omegaconf import OmegaConf
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict
+from omegaconf import OmegaConf
 
 
 class NumericalMethodsConfig:
+    """
+    Configuration manager for numerical methods.
+    """
     def __init__(self, config_dir: str = "config", env: str = None):
         """
         Initialize configuration manager.
 
-        :param config_dir: Configuration directory path
-        :param env: Environment (dev/prod)
+        :params:
+            config_dir: str - Path to configuration directory
+            env: str - Environment (dev/prod)
         """
         self.config_dir = Path(config_dir)
         self.env = env or os.getenv("NUM_METHODS_ENV", "dev")
         self._config = self._load_config()
 
-    def _load_config(self):
-        """Load configuration from YAML files."""
-        try:
-            base_config = self.config_dir / "base.yaml"
-            env_config = self.config_dir / f"{self.env}.yaml"
-            
-            base = OmegaConf.load(base_config)
-            env = OmegaConf.load(env_config)
-            
-            return OmegaConf.merge(base, env)
-        except Exception as e:
-            raise RuntimeError(f"Failed to load configuration: {e}")
-
 
     @property
     def config(self):
-        """Get configuration."""
+        """
+        Get configuration.
+        """
         return self._config
 
 
     @property
     def debug(self):
-        """Get debug flag."""
+        """
+        Get debug flag.
+        """
         return self._config.get('debug', False)
-    
-    
+
+
+    def _load_config(self):
+        """
+        Load configuration.
+        """
+        try:
+            configs = []
+            
+            base_config = self.config_dir / "base.yaml"
+            if base_config.exists():
+                configs.append(OmegaConf.load(base_config))
+            
+            methods_config = self.config_dir / "methods.yaml"
+            if methods_config.exists():
+                configs.append(OmegaConf.load(methods_config))
+            
+            env_config = self.config_dir / f"{self.env}.yaml"
+            if env_config.exists():
+                configs.append(OmegaConf.load(env_config))
+            
+            merged = OmegaConf.merge(*configs)
+            OmegaConf.set_readonly(merged, True)
+            return merged
+            
+        except Exception as e:
+            raise RuntimeError(f"Configuration loading error: {e}")
+
+
     def should_show_output(self, output_type: str) -> bool:
         """
-        Check if output type should be shown.
-        
+        Check if output should be displayed.
+
         :params:
-            output_type: str - Type of output (table/plot)
+            output_type: str - Output type (table/plot)
             
         :returns:
-            bool - True if output should be shown, False otherwise
+            bool - True if output should be shown
         """
         match output_type:
             case "table":
@@ -64,13 +86,13 @@ class NumericalMethodsConfig:
 
     def get_method_params(self, method_name: str) -> Dict:
         """
-        Get parameters for specific method.
-        
+        Get parameters for a method.
+
         :params:
-            method_name: str - Name of the method
+            method_name: str - Method name
             
         :returns:
-            Dict - Method parameters
+            dict - Method parameters
         """
         match method_name:
             case "qr":
@@ -119,3 +141,22 @@ class NumericalMethodsConfig:
                 }
             case _:
                 return {}
+
+
+_config = None
+
+
+def get_config(env: str = None) -> NumericalMethodsConfig:
+    """
+    Get global configuration.
+
+    :params:
+        env: str - Environment (dev/prod)
+        
+    :returns:
+        NumericalMethodsConfig - Configuration instance
+    """
+    global _config
+    if _config is None:
+        _config = NumericalMethodsConfig(env=env)
+    return _config

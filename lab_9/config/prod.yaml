@@ -4,11 +4,6 @@ log_level: "WARNING"
 output:
   show_tables: false
   show_plots: false
-  save_results: false
-
-matrix:
-  random_range_min: -100
-  random_range_max: 100
 
 validation:
   compare_with_numpy: false

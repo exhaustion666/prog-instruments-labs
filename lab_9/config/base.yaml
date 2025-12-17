@@ -1,6 +1,4 @@
-project:
-  name: "Numerical Methods"
-
+# Basic settings common to all environments
 debug: false
 log_level: "INFO"
 
@@ -8,9 +6,36 @@ output:
   precision: 6
   show_tables: true
   show_plots: true
-  save_results: false
 
 matrix:
-  random_range_min: -8
-  random_range_max: 8
-  default_size: 3
+  range_min: -8
+  range_max: 8
+  size: 3
+
+seidel:
+  mat: [[4, 1, 1], 
+        [1, 5, 1],
+        [1, 1, 6]]
+  vec: [6, 8, 10]
+
+qr_test:
+  mat: [[8.2, 3.2, 14.2, 14.8],
+        [5.6, 12, 15, 6.4],
+        [5.7, 3.6, 12.4, 2.3],
+        [6.8, 13.2, 6.3, 8.7]]
+  vec: [8.4, 4.5, 3.3, 14.3]
+
+nonlinear_equations:
+  root_finding:
+    test_points: [-5, -4, -3, -2, -1, 0, 1, 2, 3]
+    plot_interval: [-5, 3]
+    plot_points: 1000
+  function_coeffs: [-1.38, -5.42, 2.57, 10.95]
+  first_der_coeffs: [-4.14, -10.84, 2.57]
+  second_der_coeffs: [-8.28, -10.84]
+
+nonlinear_systems:
+  newton:
+    initial_guess: [0.5, 0.8]
+    eq1: "sin(x) + 2*y - 2"
+    eq2: "2*x + cos(y-1) - 0.7"

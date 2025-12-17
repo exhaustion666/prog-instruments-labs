@@ -1,7 +1,9 @@
+import argparse
 import math
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy as sp
+import sys
 from prettytable import PrettyTable
 from scipy.optimize import fsolve
 from config_manager import get_config
@@ -19,11 +21,16 @@ class NumericalMethods:
         self.results = {}
         np.set_printoptions(precision=4, suppress=True)
 
+
     def run_qr_decomposition(self):
         """
         Perform QR decomposition using Gram-Schmidt method.
         """
-        matrix_a = self.config.get_test_matrix("A1")
+        min_val = self.config.config.matrix.range_min
+        max_val = self.config.config.matrix.range_max
+        size = self.config.config.matrix.size
+        
+        matrix_a = np.random.randint(min_val, max_val + 1, (size, size))
         
         print("Matrix A:")
         print(matrix_a)
@@ -35,7 +42,16 @@ class NumericalMethods:
         print("\nMatrix R:")
         print(r_matrix)
         
+        if self.config.config.validation.compare_with_numpy:
+            q_np, r_np = np.linalg.qr(matrix_a)
+            print("\nNumPy QR (for comparison):")
+            print("Q (NumPy):")
+            print(q_np)
+            print("R (NumPy):")
+            print(r_np)
+        
         return q_matrix, r_matrix
+
 
     def gram_schmidt_qr(self, matrix):
         """
@@ -71,14 +87,15 @@ class NumericalMethods:
         """
         Solve linear system using QR decomposition.
         """
-        coefficient_matrix = self.config.get_test_matrix("A_qr")
-        right_side_vector = self.config.get_test_matrix("b_qr")
+        mat = np.array(self.config.config.qr_test.mat)
+        vec = np.array(self.config.config.qr_test.vec)
         
-        print(f"Coefficient matrix: {coefficient_matrix.shape[0]}x{coefficient_matrix.shape[1]}")
-        print(coefficient_matrix)
-        print(f"\nRight-hand side vector: {right_side_vector}")
+        rows, cols = mat.shape[0], mat.shape[1]
+        print(f"Coefficient matrix: {rows}x{cols}")
+        print(mat)
+        print(f"\nRight-hand side vector: {vec}")
         
-        solution = self.solve_qr(coefficient_matrix, right_side_vector)
+        solution = self.solve_qr(mat, vec)
         
         print(f"\nSolution (QR method): x = {solution}")
         
@@ -114,18 +131,14 @@ class NumericalMethods:
         """
         Solve linear system using Gauss-Seidel method.
         """
-        coefficient_matrix = np.array([
-            [3.1, 2.8, 4.9],
-            [1.9, 4.1, 2.1],
-            [7.5, 3.8, 4.8]
-        ])
-        right_side_vector = np.array([0.2, 2.1, 5.6])
+        mat = np.array(self.config.config.seidel.mat)
+        vec = np.array(self.config.config.seidel.vec)
         
         print("Matrix A:")
-        print(coefficient_matrix)
-        print(f"\nVector b: {right_side_vector}")
+        print(mat)
+        print(f"\nVector b: {vec}")
         
-        solution = self.seidel_method(coefficient_matrix, right_side_vector)
+        solution = self.seidel_method(mat, vec)
         
         print(f"\nSolution: {solution}")
         
@@ -203,25 +216,34 @@ class NumericalMethods:
         """
         Solve nonlinear equation using bisection and combined methods.
         """
-        print("Function: f(x) = -1.38x³ - 5.42x² + 2.57x + 10.95")
+        coeffs = self.config.config.nonlinear_equations.function_coeffs
+        eq_str = (f"f(x) = {coeffs[0]:.2f}x³ "
+                  f"{coeffs[1]:+.2f}x² "
+                  f"{coeffs[2]:+.2f}x "
+                  f"{coeffs[3]:+.2f}")
+        print(f"Function: {eq_str}")
         
-        test_points = [-5, -4, -3, -2, -1, 0, 1, 2, 3]
+        test_points = self.config.config.nonlinear_equations.root_finding.test_points
         
         print("\nInterval analysis:")
         intervals = []
         
-        for i in range(len(test_points)-1):
-            if (self.cubic_function(test_points[i]) 
-                * self.cubic_function(test_points[i+1]) <= 0):
-                intervals.append((test_points[i], test_points[i+1]))
-                print(f"Root in interval [{test_points[i]}, {test_points[i+1]}]")
+        for i in range(len(test_points) - 1):
+            left = test_points[i]
+            right = test_points[i + 1]
+            left_val = self.cubic_function(left)
+            right_val = self.cubic_function(right)
+            
+            if left_val * right_val <= 0:
+                intervals.append((left, right))
+                print(f"Root in interval [{left}, {right}]")
         
         return intervals
 
 
     def cubic_function(self, x_value):
         """
-        Cubic function: f(x) = -1.38x³ - 5.42x² + 2.57x + 10.95.
+        Cubic function from configuration.
         
         :params:
             x_value: float - Input value
@@ -229,12 +251,16 @@ class NumericalMethods:
         :returns:
             float - Function value at x
         """
-        return -1.38 * x_value**3 - 5.42 * x_value**2 + 2.57 * x_value + 10.95
+        coeffs = self.config.config.nonlinear_equations.function_coeffs
+        return (coeffs[0] * x_value**3 
+                    + coeffs[1] * x_value**2 
+                    + coeffs[2] * x_value 
+                    + coeffs[3])
 
 
     def first_derivative(self, x_value):
         """
-        First derivative of the cubic function.
+        First derivative from configuration.
         
         :params:
             x_value: float - Input value
@@ -242,12 +268,15 @@ class NumericalMethods:
         :returns:
             float - Derivative value at x
         """
-        return -4.14 * x_value**2 - 10.84 * x_value + 2.57
+        coeffs = self.config.config.nonlinear_equations.first_der_coeffs
+        return (coeffs[0] * x_value**2 
+                    + coeffs[1] * x_value 
+                    + coeffs[2])
 
 
     def second_derivative(self, x_value):
         """
-        Second derivative of the cubic function.
+        Second derivative from configuration.
         
         :params:
             x_value: float - Input value
@@ -255,57 +284,58 @@ class NumericalMethods:
         :returns:
             float - Second derivative value at x
         """
-        return -8.28 * x_value - 10.84
+        coeffs = self.config.config.nonlinear_equations.second_der_coeffs
+        return coeffs[0] * x_value + coeffs[1]
 
 
-def bisection_method(
-        function, left_boundary, 
-        right_boundary, 
-        epsilon=1e-3, 
-        max_iterations=100):
-    """
-    Find root of function using bisection method.
-    
-    :params:
-        function: callable - Function to find root of
-        left_boundary: float - Left interval boundary
-        right_boundary: float - Right interval boundary
-        epsilon: float - Convergence tolerance (default: 1e-3)
-        max_iterations: int - Maximum number of iterations (default: 100)
+    def bisection_method(
+            function, left_boundary, 
+            right_boundary, 
+            epsilon=1e-3, 
+            max_iterations=100):
+        """
+        Find root of function using bisection method.
         
-    :returns:
-        tuple - (root, table) where root is the found root or None,
-                and table is the iteration history
-    """
-    table = PrettyTable()
-    table.field_names = ["Iteration", "a", "b", "x", "f(a)", "f(b)", "f(x)", "|b-a|"]
-    
-    if function(left_boundary)*function(right_boundary) > 0:
-        return None, "Function has same signs at interval endpoints"
+        :params:
+            function: callable - Function to find root of
+            left_boundary: float - Left interval boundary
+            right_boundary: float - Right interval boundary
+            epsilon: float - Convergence tolerance (default: 1e-3)
+            max_iterations: int - Maximum number of iterations (default: 100)
+            
+        :returns:
+            tuple - (root, table) where root is the found root or None,
+                    and table is the iteration history
+        """
+        table = PrettyTable()
+        table.field_names = ["Iteration", "a", "b", "x", "f(a)", "f(b)", "f(x)", "|b-a|"]
+        
+        if function(left_boundary)*function(right_boundary) > 0:
+            return None, "Function has same signs at interval endpoints"
 
-    for i in range(max_iterations):
-        x = (left_boundary + right_boundary) / 2
-        f_a = function(left_boundary)
-        f_b = function(right_boundary)
-        f_x = function(x)
-        table.add_row([
-            i+1,
-            f"{left_boundary:.6f}",
-            f"{right_boundary:.6f}",
-            f"{x:.6f}",
-            f"{f_a:.6f}",
-            f"{f_b:.6f}",
-            f"{f_x:.6f}",
-            f"{abs(right_boundary - left_boundary):.6f}"
-        ])
-        if abs(right_boundary-left_boundary) < epsilon:
-            return x, table
-        if function(left_boundary)*function(x) < 0:
-            right_boundary = x
-        else:
-            left_boundary = x
+        for i in range(max_iterations):
+            x = (left_boundary + right_boundary) / 2
+            f_a = function(left_boundary)
+            f_b = function(right_boundary)
+            f_x = function(x)
+            table.add_row([
+                i+1,
+                f"{left_boundary:.6f}",
+                f"{right_boundary:.6f}",
+                f"{x:.6f}",
+                f"{f_a:.6f}",
+                f"{f_b:.6f}",
+                f"{f_x:.6f}",
+                f"{abs(right_boundary - left_boundary):.6f}"
+            ])
+            if abs(right_boundary-left_boundary) < epsilon:
+                return x, table
+            if function(left_boundary)*function(x) < 0:
+                right_boundary = x
+            else:
+                left_boundary = x
 
-    return x, table
+        return x, table
 
 
     def bisection_method(self, function, left_boundary, right_boundary, 
@@ -409,11 +439,16 @@ def bisection_method(
         """
         Solve nonlinear system using Newton's method.
         """
-        print("System of equations:")
-        print("  f1(x,y) = sin(x) + 2y - 2 = 0")
-        print("  f2(x,y) = 2x + cos(y-1) - 0.7 = 0")
+        eq1 = self.config.config.nonlinear_systems.newton.eq1
+        eq2 = self.config.config.nonlinear_systems.newton.eq2
         
-        x_initial, y_initial = 0.5, 0.8
+        print("System of equations:")
+        print(f"  f1(x,y) = {eq1} = 0")
+        print(f"  f2(x,y) = {eq2} = 0")
+        
+        newton_params = self.config.get_method_params("newton_system")
+        x_initial, y_initial = newton_params.get("initial_guess", [0.5, 0.8])
+        
         print(f"\nInitial guess: x0 = {x_initial}, y0 = {y_initial}")
         
         solution, table, iterations = self.newton_system_solver(
@@ -427,7 +462,8 @@ def bisection_method(
         print(table)
         
         if solution:
-            print(f"\nSolution: x = {solution[0]:.6f}, y = {solution[1]:.6f}")
+            print(f"\nSolution: x = {solution[0]:.6f}, "
+                  f"y = {solution[1]:.6f}")
         
         return solution
 
@@ -548,19 +584,33 @@ def bisection_method(
 
     def plot_function(self):
         """
-        Plot cubic function.
+        Plot cubic function from configuration.
         """
-        x_values = np.linspace(-5, 3, 1000)
-        y_values = self.cubic_function(x_values)
+        coeffs = self.config.config.nonlinear_equations.function_coeffs
+        config = self.config.config.nonlinear_equations.root_finding
+        
+        x_min, x_max = config.plot_interval
+        num_points = config.plot_points
+        
+        x_vals = np.linspace(x_min, x_max, num_points)
+        y_vals = self.cubic_function(x_vals)
 
         plt.figure(figsize=(12, 8))
-        plt.plot(x_values, y_values, 'b-', linewidth=2)
+        plt.plot(x_vals, y_vals, 'b-', linewidth=2)
         plt.axhline(y=0, color='k', linestyle='--', alpha=0.3)
         plt.grid(True, alpha=0.3)
         plt.xlabel('x')
         plt.ylabel('f(x)')
-        plt.title('Cubic Function: f(x) = -1.38x³ -5.42x² +2.57x +10.95')
-        plt.show()
+        
+        title = (f"Cubic Function: "
+                 f"f(x) = {coeffs[0]:.2f}x³ "
+                 f"{coeffs[1]:+.2f}x² "
+                 f"{coeffs[2]:+.2f}x "
+                 f"{coeffs[3]:+.2f}")
+        plt.title(title)
+        
+        if self.config.should_show_output("plot"):
+            plt.show()
 
 
     def plot_system(self):
@@ -597,11 +647,11 @@ def bisection_method(
         plt.title('System of Equations')
         plt.show()
 
+
     def run_all_methods(self):
         """
         Run all numerical methods.
         """
-        print("Numerical Methods Laboratory Work")
         print(f"Environment: {self.config.env}")
         
         print("\n1. QR Decomposition:")
@@ -625,10 +675,6 @@ def bisection_method(
             self.plot_system()
         
         print("\nAll methods completed successfully.")
-
-
-import argparse
-import sys
 
 
 def main():

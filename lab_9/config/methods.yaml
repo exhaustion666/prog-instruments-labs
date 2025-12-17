@@ -1,3 +1,4 @@
+# Methods parameters
 qr:
   method: "gram_schmidt"
   tolerance: 1e-10
@@ -17,16 +18,8 @@ nonlinear_equations:
   combined_method:
     max_iterations: 100
     tolerance: 1e-5
-  root_finding:
-    test_points: [-5, -4, -3, -2, -1, 0, 1, 2, 3]
-    plot_interval: [-5, 3]
-    plot_points: 1000
 
 nonlinear_systems:
   newton:
     max_iterations: 100
     tolerance: 1e-4
-    initial_guess: [0.5, 0.8]
-  plotting:
-    grid_points: 100
-    contour_levels: 20
