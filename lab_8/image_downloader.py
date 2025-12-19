@@ -75,7 +75,6 @@ class AsyncImageDownloader:
         session: aiohttp.ClientSession,
         url: str
     ) -> Optional[Path]:
-        
         async with self.semaphore:
             filename = self.get_filename_from_url(url)
             filepath = self.output_dir / filename
@@ -115,3 +114,26 @@ class AsyncImageDownloader:
             except Exception as e:
                 self.logger.error(f"Unexpected error for {url}: {str(e)}")
                 return None
+    
+
+    async def download_all_images(self, urls: List[str]) -> List[Optional[Path]]:
+        self.total_urls = len(urls)
+        self.logger.info(f"Starting download of {self.total_urls} images...")
+        
+        connector = aiohttp.TCPConnector(limit=self.max_concurrent)
+        async with aiohttp.ClientSession(connector=connector) as session:
+            tasks = [
+                self.download_single_image(session, url)
+                for url in urls
+            ]
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        valid_results = []
+        for result in results:
+            if isinstance(result, Exception):
+                self.logger.error(f"Exception in task: {str(result)}")
+                self.failed_count += 1
+            elif result is not None:
+                valid_results.append(result)
+        
+        return valid_results
