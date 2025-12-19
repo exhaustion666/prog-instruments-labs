@@ -2,6 +2,7 @@ import csv
 import logging
 from pathlib import Path
 from typing import List
+from urllib.parse import urlparse
 
 
 class AsyncImageDownloader:
@@ -46,3 +47,19 @@ class AsyncImageDownloader:
         except FileNotFoundError:
             self.logger.error(f"File not found: {csv_path}")
             raise
+    
+
+    def get_filename_from_url(self, url: str) -> str:
+        parsed_url = urlparse(url)
+        path = Path(parsed_url.path)
+        
+        if path.name:
+            filename = path.name
+        else:
+            filename = f"{parsed_url.netloc}_{hash(url)}.jpg"
+        
+        safe_filename = "".join(
+            c for c in filename if c.isalnum() or c in "._-"
+        ).rstrip()
+        
+        return safe_filename or f"image_{hash(url)}.jpg"
