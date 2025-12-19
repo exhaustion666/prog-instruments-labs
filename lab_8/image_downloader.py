@@ -1,4 +1,5 @@
 import aiohttp
+import argparse
 import asyncio
 import csv
 import logging
@@ -8,11 +9,16 @@ from urllib.parse import urlparse
 
 
 class AsyncImageDownloader:
+    """
+    Asynchronous image downloader from CSV file.
+    
+    :param max_concurrent: Maximum number of concurrent downloads
+    :param output_dir: Directory to save images
+    """
     def __init__(
         self,
         max_concurrent: int = 20,
-        output_dir: str = "downloads",
-        log_level: int = logging.INFO
+        output_dir: str = "downloads"
     ) -> None:
         self.max_concurrent = max_concurrent
         self.output_dir = Path(output_dir)
@@ -21,7 +27,7 @@ class AsyncImageDownloader:
         self.failed_count = 0
         
         logging.basicConfig(
-            level=log_level,
+            level=logging.INFO,
             format='%(asctime)s - %(levelname)s - %(message)s',
             datefmt='%H:%M:%S'
         )
@@ -31,6 +37,14 @@ class AsyncImageDownloader:
     
 
     def extract_urls_from_csv(self, csv_path: str) -> List[str]:
+        """
+        Extract image URLs from CSV file.
+        
+        :param csv_path: Path to CSV file
+        :returns: List of URLs
+        :raises FileNotFoundError: If file not found
+        :raises ValueError: If CSV is empty or has invalid format
+        """
         urls = []
         
         try:
@@ -55,6 +69,12 @@ class AsyncImageDownloader:
     
 
     def get_filename_from_url(self, url: str) -> str:
+        """
+        Generate filename from URL.
+        
+        :param url: Image URL
+        :returns: Filename with extension
+        """
         parsed_url = urlparse(url)
         path = Path(parsed_url.path)
         
@@ -75,6 +95,13 @@ class AsyncImageDownloader:
         session: aiohttp.ClientSession,
         url: str
     ) -> Optional[Path]:
+        """
+        Download single image.
+        
+        :param session: aiohttp session
+        :param url: Image URL
+        :returns: Path to saved file or None on error
+        """
         async with self.semaphore:
             filename = self.get_filename_from_url(url)
             filepath = self.output_dir / filename
@@ -122,6 +149,12 @@ class AsyncImageDownloader:
     
 
     async def download_all_images(self, urls: List[str]) -> List[Optional[Path]]:
+        """
+        Download all images asynchronously.
+        
+        :param urls: List of URLs
+        :returns: List of paths to downloaded files
+        """
         self.total_urls = len(urls)
         self.logger.info(f"Starting download of {self.total_urls} images...")
         
@@ -145,6 +178,11 @@ class AsyncImageDownloader:
     
 
     def download_from_csv(self, csv_path: str) -> None:
+        """
+        Main method to download images from CSV file.
+        
+        :param csv_path: Path to CSV file
+        """
         try:
             urls = self.extract_urls_from_csv(csv_path)
             
@@ -158,3 +196,40 @@ class AsyncImageDownloader:
         except Exception as e:
             self.logger.error(f"Critical error: {str(e)}")
             raise
+
+
+def main() -> None:
+    """
+    Main function.
+    """
+    parser = argparse.ArgumentParser(
+        description="Asynchronous image download from CSV file"
+    )
+    parser.add_argument(
+        "csv_file",
+        help="Path to CSV file with image URLs"
+    )
+    parser.add_argument(
+        "-o", "--output",
+        default="downloads",
+        help="Directory to save images (default: downloads)"
+    )
+    parser.add_argument(
+        "-c", "--concurrent",
+        type=int,
+        default=20,
+        help="Maximum concurrent downloads (default: 20)"
+    )
+    
+    args = parser.parse_args()
+    
+    downloader = AsyncImageDownloader(
+        max_concurrent=args.concurrent,
+        output_dir=args.output
+    )
+    
+    downloader.download_from_csv(args.csv_file)
+
+
+if __name__ == "__main__":
+    main()
