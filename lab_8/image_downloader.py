@@ -1,4 +1,5 @@
 import csv
+import logging
 from pathlib import Path
 from typing import List
 
@@ -7,10 +8,18 @@ class AsyncImageDownloader:
     def __init__(
         self,
         max_concurrent: int = 20,
-        output_dir: str = "downloads"
+        output_dir: str = "downloads",
+        log_level: int = logging.INFO
     ) -> None:
         self.max_concurrent = max_concurrent
         self.output_dir = Path(output_dir)
+        
+        logging.basicConfig(
+            level=log_level,
+            format='%(asctime)s - %(levelname)s - %(message)s',
+            datefmt='%H:%M:%S'
+        )
+        self.logger = logging.getLogger(__name__)
         
         self.output_dir.mkdir(parents=True, exist_ok=True)
     
@@ -26,6 +35,8 @@ class AsyncImageDownloader:
                         url = row[0].strip()
                         if url.startswith(('http://', 'https://')):
                             urls.append(url)
+                        else:
+                            self.logger.warning(f"Skipped invalid URL: {url}")
             
             if not urls:
                 raise ValueError("CSV file contains no valid URLs")
@@ -33,4 +44,5 @@ class AsyncImageDownloader:
             return urls
             
         except FileNotFoundError:
+            self.logger.error(f"File not found: {csv_path}")
             raise
