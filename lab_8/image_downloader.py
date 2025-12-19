@@ -97,6 +97,11 @@ class AsyncImageDownloader:
                             f.write(content)
                         
                         self.downloaded_count += 1
+                        self.logger.info(
+                            f"Downloaded: {filename} "
+                            f"({self.downloaded_count + self.failed_count}/"
+                            f"{self.total_urls})"
+                        )
                         return filepath
                     else:
                         self.logger.error(
@@ -137,3 +142,19 @@ class AsyncImageDownloader:
                 valid_results.append(result)
         
         return valid_results
+    
+
+    def download_from_csv(self, csv_path: str) -> None:
+        try:
+            urls = self.extract_urls_from_csv(csv_path)
+            
+            asyncio.run(self.download_all_images(urls))
+            
+            self.logger.info(
+                f"Download completed.\n"
+                f"Images saved to: {self.output_dir.absolute()}\n"
+            )
+            
+        except Exception as e:
+            self.logger.error(f"Critical error: {str(e)}")
+            raise
