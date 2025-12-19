@@ -1,7 +1,9 @@
+import aiohttp
+import asyncio
 import csv
 import logging
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 from urllib.parse import urlparse
 
 
@@ -14,6 +16,9 @@ class AsyncImageDownloader:
     ) -> None:
         self.max_concurrent = max_concurrent
         self.output_dir = Path(output_dir)
+        self.semaphore = asyncio.Semaphore(max_concurrent)
+        self.downloaded_count = 0
+        self.failed_count = 0
         
         logging.basicConfig(
             level=log_level,
@@ -63,3 +68,50 @@ class AsyncImageDownloader:
         ).rstrip()
         
         return safe_filename or f"image_{hash(url)}.jpg"
+    
+
+    async def download_single_image(
+        self,
+        session: aiohttp.ClientSession,
+        url: str
+    ) -> Optional[Path]:
+        
+        async with self.semaphore:
+            filename = self.get_filename_from_url(url)
+            filepath = self.output_dir / filename
+            
+            try:
+                async with session.get(url, timeout=aiohttp.ClientTimeout(total=30)) as response:
+                    if response.status == 200:
+                        content = await response.read()
+                        
+                        content_type = response.headers.get('Content-Type', '')
+                        if not content_type.startswith('image/'):
+                            self.logger.warning(
+                                f"URL is not an image: {url} "
+                                f"(Content-Type: {content_type})"
+                            )
+                            self.failed_count += 1
+                            return None
+                        
+                        with open(filepath, 'wb') as f:
+                            f.write(content)
+                        
+                        self.downloaded_count += 1
+                        return filepath
+                    else:
+                        self.logger.error(
+                            f"HTTP error {response.status} for URL: {url}"
+                        )
+                        self.failed_count += 1
+                        return None
+                        
+            except asyncio.TimeoutError:
+                self.logger.error(f"Timeout downloading: {url}")
+                return None
+            except aiohttp.ClientError as e:
+                self.logger.error(f"Network error for {url}: {str(e)}")
+                return None
+            except Exception as e:
+                self.logger.error(f"Unexpected error for {url}: {str(e)}")
+                return None
